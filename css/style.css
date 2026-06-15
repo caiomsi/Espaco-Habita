@@ -284,6 +284,22 @@ h1, h2, h3, h4 { line-height: 1.3; font-weight: 600; }
   gap: .5rem;
 }
 
+/* Dashboard header — target by body[data-page] so it works even when
+   the browser serves old cached HTML that lacks the .page-header--col class */
+[data-page="dashboard"] .page-header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .6rem;
+}
+
+[data-page="dashboard"] .page-header > * {
+  width: 100%;
+}
+
+[data-page="dashboard"] .page-title {
+  font-size: var(--font-size-2xl); /* 1.5rem — compact in sticky header */
+}
+
 .page-title {
   font-family: var(--font-display);
   font-style: italic;
