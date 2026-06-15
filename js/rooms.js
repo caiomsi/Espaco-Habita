@@ -35,13 +35,16 @@
       card.className = 'room-card' + (room.active ? '' : ' room-card--inactive');
 
       var ratesHtml = '';
-      if (room.rate_hourly || room.rate_daily) {
+      if (room.rate_hourly || room.rate_daily || room.rate_weekly) {
         ratesHtml = '<div class="room-card-rates">';
         if (room.rate_hourly) {
           ratesHtml += '<span>Hora: <strong>' + window.UI.formatCurrency(room.rate_hourly) + '</strong></span>';
         }
         if (room.rate_daily) {
           ratesHtml += '<span>Dia: <strong>' + window.UI.formatCurrency(room.rate_daily) + '</strong></span>';
+        }
+        if (room.rate_weekly) {
+          ratesHtml += '<span>Semana: <strong>' + window.UI.formatCurrency(room.rate_weekly) + '</strong></span>';
         }
         ratesHtml += '</div>';
       }
@@ -109,11 +112,12 @@
     if (form) form.reset();
     document.getElementById('room-modal-title').textContent = 'Editar Sala';
     document.getElementById('room-error').hidden = true;
-    document.getElementById('rm-name').value        = room.name        || '';
-    document.getElementById('rm-description').value = room.description || '';
-    document.getElementById('rm-capacity').value    = room.capacity    || '';
-    document.getElementById('rm-rate-hourly').value = room.rate_hourly || '';
-    document.getElementById('rm-rate-daily').value  = room.rate_daily  || '';
+    document.getElementById('rm-name').value         = room.name        || '';
+    document.getElementById('rm-description').value  = room.description || '';
+    document.getElementById('rm-capacity').value     = room.capacity    || '';
+    document.getElementById('rm-rate-hourly').value  = room.rate_hourly || '';
+    document.getElementById('rm-rate-daily').value   = room.rate_daily  || '';
+    document.getElementById('rm-rate-weekly').value  = room.rate_weekly || '';
     window.UI.openModal('room-modal');
   }
 
@@ -170,16 +174,18 @@
 
       document.getElementById('room-error').hidden = true;
 
-      var capacity   = parseInt(document.getElementById('rm-capacity').value);
-      var rateHourly = parseFloat(document.getElementById('rm-rate-hourly').value);
-      var rateDaily  = parseFloat(document.getElementById('rm-rate-daily').value);
+      var capacity    = parseInt(document.getElementById('rm-capacity').value);
+      var rateHourly  = parseFloat(document.getElementById('rm-rate-hourly').value);
+      var rateDaily   = parseFloat(document.getElementById('rm-rate-daily').value);
+      var rateWeekly  = parseFloat(document.getElementById('rm-rate-weekly').value);
 
       var payload = {
         name:        name,
         description: document.getElementById('rm-description').value.trim() || null,
         capacity:    isNaN(capacity)   ? null : capacity,
         rate_hourly: isNaN(rateHourly) ? null : rateHourly,
-        rate_daily:  isNaN(rateDaily)  ? null : rateDaily
+        rate_daily:  isNaN(rateDaily)  ? null : rateDaily,
+        rate_weekly: isNaN(rateWeekly) ? null : rateWeekly
       };
 
       window.UI.setLoading(saveBtn, true);

@@ -92,6 +92,7 @@
           </button>
           <button id="today-btn" class="btn btn-ghost btn-sm">Hoje</button>
           <button id="new-booking-btn" class="btn btn-primary btn-sm">+ Nova Reserva</button>
+          <button id="block-room-btn" class="btn btn-ghost btn-sm">⊘ Bloquear sala</button>
           <a href="rooms.html" class="btn btn-ghost btn-sm">Salas</a>
         </div>
       </div>
@@ -149,6 +150,14 @@
           </select>
         </div>
         <div class="form-field">
+          <label for="bk-rate-applied">
+            Valor cobrado (R$)
+            <a href="#" id="bk-rate-suggest" class="rate-suggest-link">Sugerir</a>
+          </label>
+          <input type="number" id="bk-rate-applied" name="rate_applied"
+                 min="0" step="0.01" placeholder="0,00">
+        </div>
+        <div class="form-field">
           <label for="bk-notes">Observações</label>
           <textarea id="bk-notes" name="notes" rows="3"
                     placeholder="Notas internas, equipamentos, etc."></textarea>
@@ -182,11 +191,52 @@
     </div>
   </div>
 
+  <!-- Blocked time modal -->
+  <div id="blocked-modal" class="modal-overlay" hidden
+       role="dialog" aria-modal="true" aria-labelledby="blocked-modal-title">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 id="blocked-modal-title">Bloquear Sala</h2>
+        <button class="modal-close" aria-label="Fechar">&times;</button>
+      </div>
+      <form id="blocked-form" novalidate>
+        <div class="form-field">
+          <label for="bl-room">Sala *</label>
+          <select id="bl-room" name="room_id" required></select>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="bl-start">Início *</label>
+            <input type="datetime-local" id="bl-start" name="starts_at" required step="900">
+          </div>
+          <div class="form-field">
+            <label for="bl-end">Término *</label>
+            <input type="datetime-local" id="bl-end" name="ends_at" required step="900">
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="bl-reason">Motivo</label>
+          <input type="text" id="bl-reason" name="reason"
+                 placeholder="Ex: Limpeza, manutenção, evento interno…">
+        </div>
+        <p id="blocked-error" class="form-error" hidden></p>
+        <div class="modal-actions">
+          <button type="button" id="blocked-delete-btn" class="btn btn-danger" hidden>
+            Remover bloqueio
+          </button>
+          <button type="button" class="btn btn-ghost modal-close">Cancelar</button>
+          <button type="submit" id="blocked-save-btn" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script src="js/supabase.js?v=5"></script>
-  <script src="js/auth.js?v=5"></script>
-  <script src="js/ui.js?v=5"></script>
-  <script src="js/bookings.js?v=5"></script>
-  <script src="js/calendar.js?v=5"></script>
+  <script src="js/supabase.js?v=6"></script>
+  <script src="js/auth.js?v=6"></script>
+  <script src="js/ui.js?v=6"></script>
+  <script src="js/bookings.js?v=6"></script>
+  <script src="js/calendar.js?v=6"></script>
+  <script src="js/blocked.js?v=6"></script>
 </body>
 </html>

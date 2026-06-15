@@ -5,7 +5,8 @@
     weekStart: null,
     rooms:     [],
     bookings:  [],
-    plans:     []
+    plans:     [],
+    blocked:   []
   };
 
   var BLOCK_COLORS = [
@@ -75,16 +76,21 @@
         .order('name'),
       window.sb.from('bookings')
         .select('*')
-        .gte('starts_at', state.weekStart.toISOString())
         .lt('starts_at', weekEnd.toISOString())
+        .gt('ends_at', state.weekStart.toISOString())
         .order('starts_at', { ascending: true }),
       window.sb.from('client_plans')
         .select('*, clients(name)')
-        .eq('active', true)
+        .eq('active', true),
+      window.sb.from('blocked_times')
+        .select('*')
+        .lt('starts_at', weekEnd.toISOString())
+        .gt('ends_at', state.weekStart.toISOString())
     ]).then(function (results) {
       var roomsRes    = results[0];
       var bookingsRes = results[1];
       var plansRes    = results[2];
+      var blockedRes  = results[3];
 
       if (roomsRes.error || bookingsRes.error) {
         if (grid) grid.innerHTML =
@@ -94,8 +100,9 @@
 
       state.rooms    = roomsRes.data    || [];
       state.bookings = bookingsRes.data || [];
-      // Plans are supplemental — failure doesn't block the calendar
-      state.plans    = (plansRes.error ? [] : plansRes.data) || [];
+      // Plans and blocked times are supplemental — failure doesn't block the calendar
+      state.plans    = (plansRes.error   ? [] : plansRes.data)   || [];
+      state.blocked  = (blockedRes.error ? [] : blockedRes.data) || [];
 
       renderGrid();
     });
@@ -217,6 +224,29 @@
           td.appendChild(block);
         });
 
+        // --- Blocked time blocks ---
+        var dayBlocked = state.blocked.filter(function (bt) {
+          return bt.room_id === room.id && overlapsDay(bt, dayMidnight);
+        });
+
+        dayBlocked.forEach(function (bt) {
+          var block = document.createElement('div');
+          block.className = 'blocked-block';
+          block.title =
+            'Bloqueado: ' + (bt.reason || 'sem motivo') + '\n' +
+            window.UI.formatTime(bt.starts_at) + '–' + window.UI.formatTime(bt.ends_at);
+          block.innerHTML =
+            '<span class="block-name">⊘ ' + escHtml(bt.reason || 'Bloqueado') + '</span>' +
+            '<span class="block-time">' +
+              window.UI.formatTime(bt.starts_at) + '–' + window.UI.formatTime(bt.ends_at) +
+            '</span>';
+          block.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (window.BlockedTimes) window.BlockedTimes.openEdit(bt, state.rooms);
+          });
+          td.appendChild(block);
+        });
+
         // --- Plan blocks (recurring schedule indicators) ---
         var dayPlans = state.plans.filter(function (p) {
           return p.room_id === room.id && p.day_of_week === dayIdx;
@@ -282,7 +312,11 @@
         .filter(function (p) { return p.room_id === room.id && p.day_of_week === dayOfWeek; })
         .sort(function (a, b) { return (a.start_time || '') < (b.start_time || '') ? -1 : 1; });
 
-      if (dayBookings.length === 0 && dayPlans.length === 0) return;
+      var dayBlocked = state.blocked
+        .filter(function (bt) { return bt.room_id === room.id && overlapsDay(bt, dayMidnight); })
+        .sort(function (a, b) { return new Date(a.starts_at) - new Date(b.starts_at); });
+
+      if (dayBookings.length === 0 && dayPlans.length === 0 && dayBlocked.length === 0) return;
       hasContent = true;
 
       var section = document.createElement('div');
@@ -322,6 +356,23 @@
           '<span class="day-item-time">' + start + '–' + end + '</span>' +
           '<span class="day-item-name">' + escHtml(clientName) + '</span>' +
           '<span class="day-item-badge--plan">Plano ↻</span>';
+        section.appendChild(row);
+      });
+
+      // Blocked time rows (clickable → opens edit modal)
+      dayBlocked.forEach(function (bt) {
+        var row = document.createElement('div');
+        row.className = 'day-blocked-row';
+        row.innerHTML =
+          '<span class="day-item-time">' +
+            window.UI.formatTime(bt.starts_at) + '–' + window.UI.formatTime(bt.ends_at) +
+          '</span>' +
+          '<span class="day-item-name">⊘ ' + escHtml(bt.reason || 'Bloqueado') + '</span>' +
+          '<span class="badge badge--blocked">Bloqueado</span>';
+        row.addEventListener('click', function () {
+          window.UI.closeAllModals();
+          if (window.BlockedTimes) window.BlockedTimes.openEdit(bt, state.rooms);
+        });
         section.appendChild(row);
       });
 
