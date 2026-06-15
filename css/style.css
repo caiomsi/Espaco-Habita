@@ -553,6 +553,21 @@ h1, h2, h3, h4 { line-height: 1.3; font-weight: 600; }
   margin-bottom: .85rem;
 }
 
+/* DEV HINT — remove with the HTML block before launch */
+.dev-hint {
+  margin-top: 1.25rem;
+  padding: .75rem 1rem;
+  background: #fffbeb;
+  border: 1.5px dashed #f59e0b;
+  border-radius: var(--radius);
+  font-size: var(--font-size-sm);
+  color: var(--gray-700);
+  text-align: center;
+  line-height: 1.6;
+}
+.dev-hint strong { color: #b45309; }
+/* /DEV HINT */
+
 /* ============================================================
    CALENDAR
    ============================================================ */

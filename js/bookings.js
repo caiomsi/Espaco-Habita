@@ -27,7 +27,9 @@
 
     resetForm();
     document.getElementById('booking-modal-title').textContent = 'Nova Reserva';
-    document.getElementById('booking-delete-btn').hidden = true;
+    var delBtn = document.getElementById('booking-delete-btn');
+    delBtn.hidden = true;
+    delBtn.style.display = 'none';
     document.getElementById('booking-save-btn').textContent = 'Salvar';
 
     populateRoomSelect(rooms, roomId);
@@ -47,7 +49,9 @@
 
     resetForm();
     document.getElementById('booking-modal-title').textContent = 'Editar Reserva';
-    document.getElementById('booking-delete-btn').hidden = false;
+    var delBtn = document.getElementById('booking-delete-btn');
+    delBtn.hidden = false;
+    delBtn.style.display = '';
     document.getElementById('booking-save-btn').textContent = 'Salvar';
 
     populateRoomSelect(rooms, booking.room_id);
