@@ -337,10 +337,23 @@
         }
         errEl.hidden = true;
 
+        var email = document.getElementById('cl-email').value.trim();
+        var emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email) {
+          errEl.textContent = 'O e-mail do cliente é obrigatório.';
+          errEl.hidden = false;
+          return;
+        }
+        if (!emailReg.test(email)) {
+          errEl.textContent = 'Informe um e-mail válido (ex: nome@dominio.com).';
+          errEl.hidden = false;
+          return;
+        }
+
         var payload = {
           name:  name,
           phone: document.getElementById('cl-phone').value.trim() || null,
-          email: document.getElementById('cl-email').value.trim() || null,
+          email: email,
           notes: document.getElementById('cl-notes').value.trim() || null
         };
 

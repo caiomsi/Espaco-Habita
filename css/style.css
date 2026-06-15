@@ -723,7 +723,7 @@ h1, h2, h3, h4 { line-height: 1.3; font-weight: 600; }
 
 .cal-table {
   width: 100%;
-  min-width: 680px;
+  min-width: 820px;
   border-collapse: collapse;
   table-layout: fixed;
 }
@@ -743,7 +743,13 @@ h1, h2, h3, h4 { line-height: 1.3; font-weight: 600; }
   border-right: 1px solid var(--border);
   vertical-align: top;
   font-weight: 400;
+  cursor: pointer;
+  transition: background .15s;
+  user-select: none;
 }
+
+.cal-header-cell:hover { background: rgba(196,122,53,.07); }
+.cal-header-cell.today:hover { background: linear-gradient(to bottom, rgba(196,122,53,.14), rgba(196,122,53,.08)); }
 
 .cal-header-cell:last-child { border-right: none; }
 
@@ -811,7 +817,7 @@ h1, h2, h3, h4 { line-height: 1.3; font-weight: 600; }
 .cal-cell {
   vertical-align: top;
   padding: .3rem;
-  min-height: 96px;
+  min-height: 140px;
   border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   cursor: pointer;
@@ -826,8 +832,8 @@ h1, h2, h3, h4 { line-height: 1.3; font-weight: 600; }
 
 .booking-block {
   border-radius: var(--radius-sm);
-  padding: .28rem .5rem;
-  font-size: .7rem;
+  padding: .32rem .55rem;
+  font-size: .72rem;
   font-weight: 500;
   color: #fff;
   margin-bottom: 3px;
@@ -864,6 +870,124 @@ h1, h2, h3, h4 { line-height: 1.3; font-weight: 600; }
   opacity: .88;
   white-space: nowrap;
   letter-spacing: .01em;
+}
+
+/* Recurring plan indicator (dashed, read-only, distinct from booking blocks) */
+.plan-block {
+  border-radius: var(--radius-sm);
+  padding: .22rem .45rem;
+  font-size: .67rem;
+  font-weight: 500;
+  color: var(--terra-700);
+  background: rgba(196,122,53,.07);
+  border: 1.5px dashed rgba(196,122,53,.40);
+  margin-bottom: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  cursor: default;
+  user-select: none;
+}
+.plan-block .block-name,
+.plan-block .block-time { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Booking status badges (used in day view) */
+.badge--confirmado { background: var(--green-100); color: var(--green-700); }
+.badge--pendente   { background: var(--amber-100); color: #92400e; }
+.badge--cancelado  { background: var(--warm-200);  color: var(--warm-500); }
+
+/* ---- Day zoom view modal ---- */
+.modal-box--wide { max-width: 640px; }
+
+.day-view-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: .25rem;
+}
+
+.day-room-section {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+}
+
+.day-room-name {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--warm-600);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding-bottom: .3rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.day-booking-row {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  padding: .55rem .75rem;
+  background: var(--warm-50);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+  flex-wrap: wrap;
+}
+
+.day-booking-row:hover {
+  background: rgba(196,122,53,.06);
+  border-color: var(--warm-300);
+}
+
+.day-plan-row {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  padding: .5rem .75rem;
+  background: rgba(196,122,53,.04);
+  border: 1.5px dashed rgba(196,122,53,.30);
+  border-radius: var(--radius);
+  flex-wrap: wrap;
+}
+
+.day-item-time {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--warm-700);
+  min-width: 7rem;
+  flex-shrink: 0;
+}
+
+.day-item-name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-size-sm);
+  color: var(--warm-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.day-item-badge--plan {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--terra-700);
+  background: rgba(196,122,53,.10);
+  border: 1px solid rgba(196,122,53,.25);
+  border-radius: 9999px;
+  padding: .15rem .6rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.day-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  padding: 1.5rem 0;
 }
 
 .cal-loading,

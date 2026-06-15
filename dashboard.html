@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/style.css?v=5">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
 <body data-page="dashboard">
@@ -166,11 +166,27 @@
     </div>
   </div>
 
+  <!-- Day zoom modal -->
+  <div id="day-modal" class="modal-overlay" hidden
+       role="dialog" aria-modal="true" aria-labelledby="day-modal-title">
+    <div class="modal-box modal-box--wide">
+      <div class="modal-header">
+        <h2 id="day-modal-title"></h2>
+        <button class="modal-close" aria-label="Fechar">&times;</button>
+      </div>
+      <div id="day-modal-body" class="day-view-body"></div>
+      <div class="modal-actions" style="margin-top:.5rem;padding-top:.75rem;border-top:1px solid var(--border)">
+        <button type="button" id="day-new-booking-btn" class="btn btn-primary btn-sm">+ Nova Reserva</button>
+        <button type="button" class="btn btn-ghost btn-sm modal-close">Fechar</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script src="js/supabase.js?v=4"></script>
-  <script src="js/auth.js?v=4"></script>
-  <script src="js/ui.js?v=4"></script>
-  <script src="js/bookings.js?v=4"></script>
-  <script src="js/calendar.js?v=4"></script>
+  <script src="js/supabase.js?v=5"></script>
+  <script src="js/auth.js?v=5"></script>
+  <script src="js/ui.js?v=5"></script>
+  <script src="js/bookings.js?v=5"></script>
+  <script src="js/calendar.js?v=5"></script>
 </body>
 </html>
