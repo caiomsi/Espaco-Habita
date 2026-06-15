@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Salas — Espaço Habita Admin</title>
+  <title>Clientes — Espaço Habita Admin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
-<body data-page="rooms">
+<body data-page="clients">
 
   <!-- Mobile top bar -->
   <div class="mobile-topbar">
@@ -42,7 +42,7 @@
           </svg>
           Calendário
         </a>
-        <a href="clients.html">
+        <a href="clients.html" class="active">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
             <circle cx="9" cy="7" r="4"/>
@@ -51,7 +51,7 @@
           </svg>
           Clientes
         </a>
-        <a href="rooms.html" class="active">
+        <a href="rooms.html">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
             <polyline points="9 22 9 12 15 12 15 22"/>
@@ -76,19 +76,19 @@
     <main class="main-content">
       <div class="page-header">
         <div class="page-header-left">
-          <h1 class="page-title">Salas</h1>
-          <p class="page-sub">Gerencie as salas, capacidade e tarifas</p>
+          <h1 class="page-title">Clientes</h1>
+          <p class="page-sub">Perfis de clientes e planos recorrentes</p>
         </div>
-        <button id="add-room-btn" class="btn btn-primary">
+        <button id="add-client-btn" class="btn btn-primary">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <line x1="12" y1="5" x2="12" y2="19"/>
             <line x1="5"  y1="12" x2="19" y2="12"/>
           </svg>
-          Adicionar Sala
+          Adicionar Cliente
         </button>
       </div>
       <div class="page-body">
-        <div id="rooms-list" class="rooms-grid">
+        <div id="clients-list" class="clients-grid">
           <div class="loading-state">Carregando…</div>
         </div>
       </div>
@@ -96,47 +96,92 @@
 
   </div><!-- .app-layout -->
 
-  <!-- Room modal -->
-  <div id="room-modal" class="modal-overlay" hidden
-       role="dialog" aria-modal="true" aria-labelledby="room-modal-title">
+  <!-- Client modal (add / edit) -->
+  <div id="client-modal" class="modal-overlay" hidden
+       role="dialog" aria-modal="true" aria-labelledby="client-modal-title">
     <div class="modal-box">
       <div class="modal-header">
-        <h2 id="room-modal-title">Nova Sala</h2>
+        <h2 id="client-modal-title">Novo Cliente</h2>
         <button class="modal-close" aria-label="Fechar">&times;</button>
       </div>
-      <form id="room-form" novalidate>
+      <form id="client-form" novalidate>
         <div class="form-field">
-          <label for="rm-name">Nome da sala *</label>
-          <input type="text" id="rm-name" name="name" required
-                 placeholder="Ex: Sala de Pilates">
+          <label for="cl-name">Nome completo *</label>
+          <input type="text" id="cl-name" name="name" required
+                 placeholder="Ex: Maria Oliveira">
         </div>
         <div class="form-field">
-          <label for="rm-description">Descrição</label>
-          <textarea id="rm-description" name="description" rows="2"
-                    placeholder="Descrição breve da sala…"></textarea>
+          <label for="cl-phone">Telefone / WhatsApp</label>
+          <input type="tel" id="cl-phone" name="phone"
+                 placeholder="(34) 9 9999-9999">
         </div>
         <div class="form-field">
-          <label for="rm-capacity">Capacidade (pessoas)</label>
-          <input type="number" id="rm-capacity" name="capacity" min="1" placeholder="Ex: 10">
+          <label for="cl-email">E-mail</label>
+          <input type="email" id="cl-email" name="email"
+                 placeholder="cliente@email.com">
+        </div>
+        <div class="form-field">
+          <label for="cl-notes">Observações</label>
+          <textarea id="cl-notes" name="notes" rows="2"
+                    placeholder="Notas internas sobre o cliente…"></textarea>
+        </div>
+        <p id="client-error" class="form-error" hidden></p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost modal-close">Cancelar</button>
+          <button type="submit" id="client-save-btn" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Plans modal -->
+  <div id="plans-modal" class="modal-overlay" hidden
+       role="dialog" aria-modal="true" aria-labelledby="plans-modal-title">
+    <div class="modal-box" style="max-width:560px">
+      <div class="modal-header">
+        <h2 id="plans-modal-title">Planos</h2>
+        <button class="modal-close" aria-label="Fechar">&times;</button>
+      </div>
+
+      <div id="plans-list" class="plans-list">
+        <div class="loading-state" style="padding:1rem">Carregando…</div>
+      </div>
+
+      <!-- Add plan form -->
+      <div class="plan-add-form">
+        <p style="font-weight:600;font-size:.875rem">Adicionar Plano</p>
+        <div class="form-field">
+          <label for="pl-room">Sala *</label>
+          <select id="pl-room"></select>
+        </div>
+        <div class="form-field">
+          <label>Dias da semana *</label>
+          <div class="days-checkboxes">
+            <label class="day-label"><input type="checkbox" name="day" value="0"> Seg</label>
+            <label class="day-label"><input type="checkbox" name="day" value="1"> Ter</label>
+            <label class="day-label"><input type="checkbox" name="day" value="2"> Qua</label>
+            <label class="day-label"><input type="checkbox" name="day" value="3"> Qui</label>
+            <label class="day-label"><input type="checkbox" name="day" value="4"> Sex</label>
+            <label class="day-label"><input type="checkbox" name="day" value="5"> Sáb</label>
+            <label class="day-label"><input type="checkbox" name="day" value="6"> Dom</label>
+          </div>
         </div>
         <div class="form-row">
           <div class="form-field">
-            <label for="rm-rate-hourly">Tarifa por hora (R$)</label>
-            <input type="number" id="rm-rate-hourly" name="rate_hourly"
-                   min="0" step="0.01" placeholder="0,00">
+            <label for="pl-start">Início *</label>
+            <input type="time" id="pl-start" step="900">
           </div>
           <div class="form-field">
-            <label for="rm-rate-daily">Tarifa por dia (R$)</label>
-            <input type="number" id="rm-rate-daily" name="rate_daily"
-                   min="0" step="0.01" placeholder="0,00">
+            <label for="pl-end">Término *</label>
+            <input type="time" id="pl-end" step="900">
           </div>
         </div>
-        <p id="room-error" class="form-error" hidden></p>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-ghost modal-close">Cancelar</button>
-          <button type="submit" id="room-save-btn" class="btn btn-primary">Salvar</button>
+        <p id="plan-error" class="form-error" hidden></p>
+        <div class="modal-actions" style="margin-top:.75rem;padding-top:.75rem">
+          <button type="button" class="btn btn-ghost modal-close">Fechar</button>
+          <button type="button" id="plan-save-btn" class="btn btn-primary">Salvar Plano</button>
         </div>
-      </form>
+      </div>
     </div>
   </div>
 
@@ -144,6 +189,6 @@
   <script src="js/supabase.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/ui.js"></script>
-  <script src="js/rooms.js"></script>
+  <script src="js/clients.js"></script>
 </body>
 </html>
