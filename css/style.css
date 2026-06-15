@@ -277,6 +277,13 @@ h1, h2, h3, h4 { line-height: 1.3; font-weight: 600; }
 
 .page-header-left { flex: 1; min-width: 0; }
 
+/* Stack title above toolbar (used on the calendar dashboard) */
+.page-header--col {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .5rem;
+}
+
 .page-title {
   font-family: var(--font-display);
   font-style: italic;
