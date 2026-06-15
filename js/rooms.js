@@ -129,12 +129,28 @@
 
   // ---- Boot: wire events after auth is confirmed ---------
 
-  document.addEventListener('auth:ready', function () {
-    loadRooms();
+  function bootRooms() {
+    function onAuthReady() {
+      loadRooms();
+      var addBtn = document.getElementById('add-room-btn');
+      if (addBtn) addBtn.addEventListener('click', openNew);
+    }
 
-    var addBtn = document.getElementById('add-room-btn');
-    if (addBtn) addBtn.addEventListener('click', openNew);
-  });
+    if (window.authReady) { onAuthReady(); return; }
+    document.addEventListener('auth:ready', onAuthReady, { once: true });
+    setTimeout(function () {
+      if (!window.authReady) {
+        var list = document.getElementById('rooms-list');
+        if (list && list.querySelector('.loading-state')) {
+          list.innerHTML =
+            '<div class="error-state">Não foi possível conectar. ' +
+            '<a href="login.html">Fazer login novamente</a>.</div>';
+        }
+      }
+    }, 10000);
+  }
+
+  bootRooms();
 
   document.addEventListener('DOMContentLoaded', function () {
     var form = document.getElementById('room-form');

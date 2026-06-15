@@ -254,6 +254,24 @@
 
   // ---- Boot: wait for auth:ready event from auth.js ------
 
-  document.addEventListener('auth:ready', init);
+  function boot() {
+    // If auth already fired before this listener registered, run immediately
+    if (window.authReady) { init(); return; }
+    document.addEventListener('auth:ready', init, { once: true });
+    // Timeout fallback: if auth never fires (network issue, CDN blocked, etc.)
+    setTimeout(function () {
+      if (!window.authReady) {
+        var grid = document.getElementById('calendar-grid');
+        if (grid && grid.querySelector('.cal-loading')) {
+          grid.innerHTML =
+            '<div class="cal-loading" style="color:var(--danger)">' +
+            'Não foi possível conectar. <a href="login.html">Fazer login novamente</a>.' +
+            '</div>';
+        }
+      }
+    }, 10000);
+  }
+
+  boot();
 
 })();

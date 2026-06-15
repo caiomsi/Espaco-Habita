@@ -12,17 +12,29 @@
     var list = document.getElementById('clients-list');
     if (list) list.innerHTML = '<div class="loading-state">Carregando…</div>';
 
-    window.sb
-      .from('clients')
-      .select('*, client_plans(*, rooms(name))')
-      .order('name')
-      .then(function (res) {
-        if (res.error) {
-          if (list) list.innerHTML = '<div class="error-state">Erro ao carregar clientes: ' + res.error.message + '</div>';
-          return;
-        }
-        renderClients(res.data || []);
+    // Load clients and their active plans in parallel, then merge in JS
+    Promise.all([
+      window.sb.from('clients').select('*').order('name'),
+      window.sb.from('client_plans').select('*, rooms(name)').eq('active', true)
+    ]).then(function (results) {
+      var clientsRes = results[0];
+      var plansRes   = results[1];
+
+      if (clientsRes.error) {
+        if (list) list.innerHTML = '<div class="error-state">Erro ao carregar clientes: ' + clientsRes.error.message + '</div>';
+        return;
+      }
+
+      var clients = clientsRes.data || [];
+      var plans   = plansRes.data   || [];
+
+      // Attach plans to each client
+      clients.forEach(function (c) {
+        c.client_plans = plans.filter(function (p) { return p.client_id === c.id; });
       });
+
+      renderClients(clients);
+    });
   }
 
   function renderClients(clients) {
@@ -285,11 +297,28 @@
 
   // ---- Boot -----------------------------------------------
 
-  document.addEventListener('auth:ready', function () {
-    loadClients();
-    var addBtn = document.getElementById('add-client-btn');
-    if (addBtn) addBtn.addEventListener('click', openNew);
-  });
+  function bootClients() {
+    function onAuthReady() {
+      loadClients();
+      var addBtn = document.getElementById('add-client-btn');
+      if (addBtn) addBtn.addEventListener('click', openNew);
+    }
+
+    if (window.authReady) { onAuthReady(); return; }
+    document.addEventListener('auth:ready', onAuthReady, { once: true });
+    setTimeout(function () {
+      if (!window.authReady) {
+        var list = document.getElementById('clients-list');
+        if (list && list.querySelector('.loading-state')) {
+          list.innerHTML =
+            '<div class="error-state">Não foi possível conectar. ' +
+            '<a href="login.html">Fazer login novamente</a>.</div>';
+        }
+      }
+    }, 10000);
+  }
+
+  bootClients();
 
   document.addEventListener('DOMContentLoaded', function () {
     // Client form submit

@@ -24,6 +24,9 @@
       var userEl = document.getElementById('sidebar-user');
       if (userEl) userEl.textContent = session.user.email;
 
+      // Set global flag so late-registering listeners can check it
+      window.authReady = true;
+
       // Signal page-specific JS that auth is ready
       document.dispatchEvent(new CustomEvent('auth:ready'));
     }
@@ -55,13 +58,10 @@
         .then(function (res) {
           if (res.error) {
             var msg = res.error.message || '';
-            if (msg.indexOf('Invalid login credentials') !== -1 ||
-                msg.indexOf('invalid_grant') !== -1 ||
-                msg.indexOf('Email not confirmed') === -1) {
-              msg = 'Email ou senha incorretos.';
-            }
-            if (res.error.message && res.error.message.indexOf('Email not confirmed') !== -1) {
+            if (msg.indexOf('Email not confirmed') !== -1) {
               msg = 'E-mail não confirmado. Contate o administrador.';
+            } else {
+              msg = 'Email ou senha incorretos.';
             }
             errorEl.textContent = msg;
             errorEl.hidden = false;
