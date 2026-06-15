@@ -32,13 +32,22 @@
     delBtn.style.display = 'none';
     document.getElementById('booking-save-btn').textContent = 'Salvar';
 
-    populateRoomSelect(rooms, roomId);
+    var start = startDate || new Date();
+    var end   = new Date(start.getTime() + 60 * 60000);
+    document.getElementById('bk-start').value = window.UI.toDatetimeLocal(start);
+    document.getElementById('bk-end').value   = window.UI.toDatetimeLocal(end);
 
-    var endDate = new Date(startDate.getTime() + 60 * 60000); // +1 hour default
-    document.getElementById('bk-start').value = window.UI.toDatetimeLocal(startDate);
-    document.getElementById('bk-end').value   = window.UI.toDatetimeLocal(endDate);
-
-    window.UI.openModal('booking-modal');
+    if (rooms && rooms.length > 0) {
+      populateRoomSelect(rooms, roomId);
+      window.UI.openModal('booking-modal');
+    } else {
+      // Load rooms fresh from Supabase (used by the header button)
+      window.sb.from('rooms').select('*').eq('active', true).order('name')
+        .then(function (res) {
+          populateRoomSelect(res.data || [], roomId);
+          window.UI.openModal('booking-modal');
+        });
+    }
   }
 
   // ---- Open modal: edit existing booking -----------------
@@ -126,6 +135,13 @@
   // ---- Wire up form events after DOM ready ---------------
 
   document.addEventListener('DOMContentLoaded', function () {
+    var newBookingBtn = document.getElementById('new-booking-btn');
+    if (newBookingBtn) {
+      newBookingBtn.addEventListener('click', function () {
+        openNew(null, null, null);
+      });
+    }
+
     var form = document.getElementById('booking-form');
     if (!form) return;
 
