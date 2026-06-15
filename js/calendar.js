@@ -9,14 +9,14 @@
 
   // Cycles through 8 colours by room position in the list
   var BLOCK_COLORS = [
-    '#6366f1', // indigo
-    '#0d9488', // teal
-    '#f59e0b', // amber
-    '#ec4899', // pink
-    '#8b5cf6', // violet
-    '#3b82f6', // blue
-    '#10b981', // emerald
-    '#f97316'  // orange
+    '#c47a35', // terracotta
+    '#2d6a4f', // forest
+    '#7c5cbf', // plum
+    '#c4435a', // crimson
+    '#1a6fa8', // sapphire
+    '#c06820', // amber-orange
+    '#3d7a8a', // teal-slate
+    '#5a5e2f', // olive
   ];
 
   var DAY_NAMES = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
