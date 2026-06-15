@@ -12,6 +12,7 @@
 
   function populateRoomSelect(rooms, selectedId) {
     _rooms = rooms || [];
+    window._bkRooms = _rooms;
     var sel = document.getElementById('bk-room');
     if (!sel) return;
     sel.innerHTML = '';
@@ -141,17 +142,17 @@
 
     var start = startDate || new Date();
     var end   = new Date(start.getTime() + 60 * 60000);
-    document.getElementById('bk-start').value = window.UI.toDatetimeLocal(start);
-    document.getElementById('bk-end').value   = window.UI.toDatetimeLocal(end);
 
     if (rooms && rooms.length > 0) {
       populateRoomSelect(rooms, roomId);
       window.UI.openModal('booking-modal');
+      if (window.BKPicker) window.BKPicker.open(roomId, start, end);
     } else {
       window.sb.from('rooms').select('*').eq('active', true).order('name')
         .then(function (res) {
           populateRoomSelect(res.data || [], roomId);
           window.UI.openModal('booking-modal');
+          if (window.BKPicker) window.BKPicker.open(roomId, start, end);
         });
     }
   }
@@ -178,14 +179,13 @@
       hintEl.textContent = booking.client_phone;
       hintEl.hidden = false;
     }
-    document.getElementById('bk-start').value       = window.UI.toDatetimeLocal(new Date(booking.starts_at));
-    document.getElementById('bk-end').value         = window.UI.toDatetimeLocal(new Date(booking.ends_at));
     document.getElementById('bk-status').value      = booking.status || 'confirmado';
     document.getElementById('bk-notes').value       = booking.notes || '';
     var rateEl = document.getElementById('bk-rate-applied');
     if (rateEl) rateEl.value = booking.rate_applied != null ? booking.rate_applied : '';
 
     window.UI.openModal('booking-modal');
+    if (window.BKPicker) window.BKPicker.open(booking.room_id, new Date(booking.starts_at), new Date(booking.ends_at), booking.id);
   }
 
   // ---- Shared helpers ------------------------------------
@@ -197,6 +197,7 @@
     hideSuggestions();
     setError('');
     setWarning('');
+    if (window.BKPicker) window.BKPicker.reset();
   }
 
   function setError(msg) {
@@ -490,7 +491,7 @@
     }
 
     // Reset pendingForce on any form field change
-    ['bk-room', 'bk-start', 'bk-end', 'bk-status', 'bk-notes'].forEach(function (id) {
+    ['bk-room', 'bk-status', 'bk-notes'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.addEventListener('change', resetPendingForce);
     });

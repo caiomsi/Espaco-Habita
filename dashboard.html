@@ -131,16 +131,63 @@
           <label for="bk-room">Sala *</label>
           <select id="bk-room" name="room_id" required></select>
         </div>
-        <div class="form-row">
-          <div class="form-field">
-            <label for="bk-start">Início *</label>
-            <input type="datetime-local" id="bk-start" name="starts_at" required step="900">
-          </div>
-          <div class="form-field">
-            <label for="bk-end">Término *</label>
-            <input type="datetime-local" id="bk-end" name="ends_at" required step="900">
+        <!-- Hidden inputs — bookings.js reads these for the submit payload -->
+        <input type="hidden" id="bk-start" name="starts_at">
+        <input type="hidden" id="bk-end"   name="ends_at">
+
+        <!-- Duration preset pills -->
+        <div class="form-field">
+          <label>Duração</label>
+          <div class="duration-pills" id="bk-duration-pills">
+            <button type="button" class="duration-pill" data-preset="1h">1h</button>
+            <button type="button" class="duration-pill" data-preset="2h">2h</button>
+            <button type="button" class="duration-pill" data-preset="half">Meio período</button>
+            <button type="button" class="duration-pill" data-preset="day">Dia inteiro</button>
+            <button type="button" class="duration-pill" data-preset="week">Semana</button>
           </div>
         </div>
+
+        <!-- Display fields -->
+        <div class="form-row bk-display-row">
+          <div class="form-field">
+            <label>Início *</label>
+            <div class="bk-display-field bk-display-field--active" id="bk-start-display" data-field="start" tabindex="0" role="button" aria-label="Selecionar data e hora de início">
+              <span class="bk-display-value bk-display-value--empty" id="bk-start-text">—</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.5;flex-shrink:0">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Término *</label>
+            <div class="bk-display-field" id="bk-end-display" data-field="end" tabindex="0" role="button" aria-label="Selecionar data e hora de término">
+              <span class="bk-display-value bk-display-value--empty" id="bk-end-text">—</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.5;flex-shrink:0">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calendar + time list -->
+        <div class="bk-picker-panel" id="bk-picker-panel">
+          <div class="bk-calendar" id="bk-calendar"></div>
+          <div class="bk-time-col">
+            <div class="bk-time-col-header">Horário</div>
+            <div class="bk-time-list" id="bk-time-list"></div>
+          </div>
+        </div>
+
+        <!-- Live summary bar -->
+        <div class="bk-summary-bar" id="bk-summary-bar">
+          <span class="bk-summary-icon" id="bk-summary-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </span>
+          <span class="bk-summary-text" id="bk-summary-text">Selecione sala, data e horário</span>
+        </div>
+
         <div class="form-field">
           <label for="bk-status">Status</label>
           <select id="bk-status" name="status">
@@ -235,7 +282,8 @@
   <script src="js/supabase.js?v=6"></script>
   <script src="js/auth.js?v=6"></script>
   <script src="js/ui.js?v=6"></script>
-  <script src="js/bookings.js?v=6"></script>
+  <script src="js/bookings.js?v=7"></script>
+  <script src="js/bk-picker.js?v=7"></script>
   <script src="js/calendar.js?v=6"></script>
   <script src="js/blocked.js?v=6"></script>
 </body>
