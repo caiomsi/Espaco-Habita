@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Salas — Espaço Habita Admin</title>
+  <title>Solicitações — Espaço Habita Admin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=7">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
-<body data-page="rooms">
+<body data-page="requests">
 
   <!-- Mobile top bar -->
   <div class="mobile-topbar">
@@ -51,14 +51,14 @@
           </svg>
           Clientes
         </a>
-        <a href="rooms.html" class="active">
+        <a href="rooms.html">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
             <polyline points="9 22 9 12 15 12 15 22"/>
           </svg>
           Salas
         </a>
-        <a href="requests.html">
+        <a href="requests.html" class="active">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
             <polyline points="22 4 12 14.01 9 11.01"/>
@@ -83,19 +83,20 @@
     <main class="main-content">
       <div class="page-header">
         <div class="page-header-left">
-          <h1 class="page-title">Salas</h1>
-          <p class="page-sub">Gerencie as salas, capacidade e tarifas</p>
+          <h1 class="page-title">Solicitações</h1>
+          <p class="page-sub">Pedidos de reserva aguardando aprovação</p>
         </div>
-        <button id="add-room-btn" class="btn btn-primary">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5"  y1="12" x2="19" y2="12"/>
+        <a href="salas.html" class="btn btn-ghost btn-sm" target="_blank">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15 3 21 3 21 9"/>
+            <line x1="10" y1="14" x2="21" y2="3"/>
           </svg>
-          Adicionar Sala
-        </button>
+          Ver página pública
+        </a>
       </div>
       <div class="page-body">
-        <div id="rooms-list" class="rooms-grid">
+        <div id="requests-list" class="requests-list">
           <div class="loading-state">Carregando…</div>
         </div>
       </div>
@@ -103,59 +104,11 @@
 
   </div><!-- .app-layout -->
 
-  <!-- Room modal -->
-  <div id="room-modal" class="modal-overlay" hidden
-       role="dialog" aria-modal="true" aria-labelledby="room-modal-title">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h2 id="room-modal-title">Nova Sala</h2>
-        <button class="modal-close" aria-label="Fechar">&times;</button>
-      </div>
-      <form id="room-form" novalidate>
-        <div class="form-field">
-          <label for="rm-name">Nome da sala *</label>
-          <input type="text" id="rm-name" name="name" required
-                 placeholder="Ex: Sala de Pilates">
-        </div>
-        <div class="form-field">
-          <label for="rm-description">Descrição</label>
-          <textarea id="rm-description" name="description" rows="2"
-                    placeholder="Descrição breve da sala…"></textarea>
-        </div>
-        <div class="form-field">
-          <label for="rm-capacity">Capacidade (pessoas)</label>
-          <input type="number" id="rm-capacity" name="capacity" min="1" placeholder="Ex: 10">
-        </div>
-        <div class="form-row">
-          <div class="form-field">
-            <label for="rm-rate-hourly">Tarifa por hora (R$)</label>
-            <input type="number" id="rm-rate-hourly" name="rate_hourly"
-                   min="0" step="0.01" placeholder="0,00">
-          </div>
-          <div class="form-field">
-            <label for="rm-rate-daily">Tarifa por dia (R$)</label>
-            <input type="number" id="rm-rate-daily" name="rate_daily"
-                   min="0" step="0.01" placeholder="0,00">
-          </div>
-          <div class="form-field">
-            <label for="rm-rate-weekly">Tarifa semanal (R$)</label>
-            <input type="number" id="rm-rate-weekly" name="rate_weekly"
-                   min="0" step="0.01" placeholder="0,00">
-          </div>
-        </div>
-        <p id="room-error" class="form-error" hidden></p>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-ghost modal-close">Cancelar</button>
-          <button type="submit" id="room-save-btn" class="btn btn-primary">Salvar</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/supabase.js?v=7"></script>
   <script src="js/auth.js?v=7"></script>
   <script src="js/ui.js?v=7"></script>
-  <script src="js/rooms.js?v=7"></script>
+  <script src="js/overlap.js?v=7"></script>
+  <script src="js/requests.js?v=7"></script>
 </body>
 </html>

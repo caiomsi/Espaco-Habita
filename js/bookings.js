@@ -259,57 +259,16 @@
     var saveBtn = document.getElementById('booking-save-btn');
     window.UI.setLoading(saveBtn, true);
 
-    // 1. Check blocked_times (hard block — cannot override)
-    window.sb.from('blocked_times')
-      .select('id, reason, starts_at, ends_at')
-      .eq('room_id', roomId)
-      .lt('starts_at', endsAt)
-      .gt('ends_at', startsAt)
-      .then(function (res) {
-        window.UI.setLoading(saveBtn, false);
-        if (res.error) {
-          setError('Erro ao verificar bloqueios: ' + res.error.message);
-          return;
-        }
-        if (res.data && res.data.length > 0) {
-          var bt = res.data[0];
-          setError(
-            'Sala bloqueada: "' + (bt.reason || 'sem motivo') + '" · ' +
-            window.UI.formatTime(bt.starts_at) + '–' + window.UI.formatTime(bt.ends_at) +
-            '. Remova o bloqueio antes de criar a reserva.'
-          );
-          return;
-        }
-
-        // 2. Check bookings overlap (soft — can override)
-        checkBookingConflict(roomId, startsAt, endsAt, excludeId, payload);
-      });
-  }
-
-  function checkBookingConflict(roomId, startsAt, endsAt, excludeId, payload) {
-    var saveBtn = document.getElementById('booking-save-btn');
-    window.UI.setLoading(saveBtn, true);
-
-    var q = window.sb.from('bookings')
-      .select('id, client_name, starts_at, ends_at')
-      .eq('room_id', roomId)
-      .neq('status', 'cancelado')
-      .lt('starts_at', endsAt)
-      .gt('ends_at', startsAt);
-    if (excludeId) q = q.neq('id', excludeId);
-
-    q.then(function (res) {
+    window.checkOverlap(roomId, startsAt, endsAt, excludeId).then(function (result) {
       window.UI.setLoading(saveBtn, false);
-      if (res.error) {
-        setError('Erro ao verificar conflitos: ' + res.error.message);
+
+      if (result.hasConflict && result.isHardBlock) {
+        setError('Sala bloqueada: ' + result.reason + '. Remova o bloqueio antes de criar a reserva.');
         return;
       }
-      if (res.data && res.data.length > 0) {
-        var c = res.data[0];
+      if (result.hasConflict && !result.isHardBlock) {
         setWarning(
-          'Atenção: sobreposição com reserva de ' + c.client_name +
-          ' (' + window.UI.formatTime(c.starts_at) + '–' +
-          window.UI.formatTime(c.ends_at) + ').' +
+          'Atenção: ' + result.reason + '.' +
           ' Clique em "Salvar mesmo assim" para confirmar.'
         );
         pendingForce = true;
@@ -317,8 +276,11 @@
         return;
       }
 
-      // 3. Check client_plans (soft — can override)
+      // No hard conflict — check client_plans (soft)
       checkPlanConflict(roomId, startsAt, endsAt, payload);
+    }).catch(function (err) {
+      window.UI.setLoading(saveBtn, false);
+      setError('Erro ao verificar conflitos. Tente novamente.');
     });
   }
 

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sala — Espaço Habita</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=7">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+</head>
+<body class="pub-body">
+
+  <header class="pub-header">
+    <div class="pub-header-inner">
+      <a href="salas.html" class="pub-brand">
+        <span class="pub-brand-name">Espaço Habita</span>
+        <span class="pub-brand-sep">·</span>
+        <span class="pub-brand-tagline">Salas para profissionais de saúde</span>
+      </a>
+      <a href="salas.html" class="pub-admin-link">← Todas as salas</a>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Room hero -->
+    <section class="sala-hero">
+      <div id="sala-hero-photo" class="sala-hero-photo"></div>
+      <div class="pub-container">
+        <div class="sala-hero-content">
+          <h1 id="sala-hero-name" class="sala-hero-name">Carregando…</h1>
+          <p id="sala-hero-desc" class="sala-hero-desc" hidden></p>
+          <div id="sala-hero-meta" class="sala-hero-meta"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Availability calendar -->
+    <section class="pub-section pub-section--tinted">
+      <div class="pub-container pub-container--narrow">
+        <h2 class="pub-section-title">Disponibilidade — próximas 4 semanas</h2>
+        <p class="pub-section-sub">Clique em um dia livre para pré-preencher o formulário abaixo.</p>
+
+        <div class="avail-wrap">
+          <div id="avail-grid" class="avail-grid">
+            <div class="pub-loading"><div class="pub-spinner"></div> Carregando…</div>
+          </div>
+          <div id="avail-legend" class="avail-legend">
+            <span class="avail-legend-item avail-legend--free">Disponível</span>
+            <span class="avail-legend-item avail-legend--busy">Ocupado</span>
+            <span class="avail-legend-item avail-legend--past">Passado</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Request form -->
+    <section class="pub-section" id="form-section">
+      <div class="pub-container pub-container--narrow">
+        <h2 class="pub-section-title">Solicitar reserva</h2>
+        <p class="pub-section-sub">Preencha seus dados e o horário desejado. Entraremos em contato para confirmar.</p>
+
+        <div id="req-form-wrap">
+          <form id="req-form" class="pub-form" novalidate>
+
+            <div class="pub-form-group">
+              <h3 class="pub-form-group-title">Seus dados</h3>
+              <div class="pub-form-row">
+                <div class="pub-form-field">
+                  <label for="req-name">Nome completo *</label>
+                  <input type="text" id="req-name" name="name" required
+                         placeholder="Dr. Nome Sobrenome" autocomplete="name">
+                </div>
+                <div class="pub-form-field">
+                  <label for="req-specialty">Especialidade *</label>
+                  <input type="text" id="req-specialty" name="specialty" required
+                         placeholder="Ex: Fisioterapia, Psicologia…">
+                </div>
+              </div>
+              <div class="pub-form-row">
+                <div class="pub-form-field">
+                  <label for="req-email">E-mail *</label>
+                  <input type="email" id="req-email" name="email" required
+                         placeholder="nome@email.com" autocomplete="email">
+                </div>
+                <div class="pub-form-field">
+                  <label for="req-phone">Telefone *</label>
+                  <input type="tel" id="req-phone" name="phone" required
+                         placeholder="(34) 9 9999-9999" autocomplete="tel">
+                </div>
+              </div>
+            </div>
+
+            <div class="pub-form-group">
+              <h3 class="pub-form-group-title">Período desejado</h3>
+
+              <div class="pub-form-field">
+                <label>Tipo de locação</label>
+                <div class="rate-preset-pills">
+                  <button type="button" class="rate-preset-pill rate-preset-pill--active" data-rate="hora">Por hora</button>
+                  <button type="button" class="rate-preset-pill" data-rate="dia">Dia inteiro</button>
+                  <button type="button" class="rate-preset-pill" data-rate="semana">Semana</button>
+                </div>
+              </div>
+
+              <div class="pub-form-row">
+                <div class="pub-form-field">
+                  <label for="req-start">Início *</label>
+                  <input type="datetime-local" id="req-start" name="starts_at" required step="1800">
+                </div>
+                <div class="pub-form-field">
+                  <label for="req-end">Término *</label>
+                  <input type="datetime-local" id="req-end" name="ends_at" required step="1800">
+                </div>
+              </div>
+
+              <div id="price-preview" class="pub-price-preview" hidden></div>
+            </div>
+
+            <div class="pub-form-group">
+              <div class="pub-form-field">
+                <label for="req-notes">Observações <span class="pub-optional">(opcional)</span></label>
+                <textarea id="req-notes" name="notes" rows="3"
+                          placeholder="Equipamentos necessários, frequência desejada, outras informações…"></textarea>
+              </div>
+            </div>
+
+            <p id="req-error" class="pub-form-error" hidden></p>
+
+            <button type="submit" id="req-submit" class="pub-cta-btn pub-cta-btn--full">
+              Enviar solicitação
+            </button>
+
+            <p class="pub-form-disclaimer">
+              Sua solicitação será analisada e você receberá uma resposta por e-mail em até 24 horas.
+            </p>
+          </form>
+        </div>
+
+        <!-- Success state (hidden until submitted) -->
+        <div id="req-success" class="pub-success" hidden>
+          <div class="pub-success-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+          </div>
+          <h3 class="pub-success-title">Solicitação enviada!</h3>
+          <p class="pub-success-msg">Recebemos seu pedido e entraremos em contato pelo e-mail fornecido em até 24 horas para confirmar a reserva.</p>
+          <a href="salas.html" class="pub-cta-btn" style="display:inline-block;margin-top:1.5rem;">← Ver outras salas</a>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="pub-footer">
+    <div class="pub-container">
+      <p class="pub-footer-text">© 2026 Espaço Habita &nbsp;·&nbsp; <a href="login.html" class="pub-footer-link">Painel administrativo</a></p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/supabase.js?v=7"></script>
+  <script src="js/ui.js?v=7"></script>
+  <script src="js/overlap.js?v=7"></script>
+  <script src="js/sala.js?v=7"></script>
+</body>
+</html>

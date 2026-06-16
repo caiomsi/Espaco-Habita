@@ -138,6 +138,28 @@
       return new Intl.NumberFormat('pt-BR', {
         style: 'currency', currency: 'BRL'
       }).format(parseFloat(val));
+    },
+
+    // ---- Sidebar request badge (admin pages only) -------
+
+    loadRequestBadge: function () {
+      var link = document.querySelector('.sidebar-nav a[href="requests.html"]');
+      if (!link || !window.sb) return;
+
+      window.sb.from('bookings')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'solicitado')
+        .then(function (res) {
+          var count = (res && res.count) || 0;
+          var existing = link.querySelector('.sidebar-badge');
+          if (existing) existing.remove();
+          if (count > 0) {
+            var badge = document.createElement('span');
+            badge.className = 'sidebar-badge';
+            badge.textContent = count;
+            link.appendChild(badge);
+          }
+        });
     }
 
   };

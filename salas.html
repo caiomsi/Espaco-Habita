@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Salas — Espaço Habita</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=7">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+</head>
+<body class="pub-body">
+
+  <header class="pub-header">
+    <div class="pub-header-inner">
+      <a href="salas.html" class="pub-brand">
+        <span class="pub-brand-name">Espaço Habita</span>
+        <span class="pub-brand-sep">·</span>
+        <span class="pub-brand-tagline">Salas para profissionais de saúde</span>
+      </a>
+      <a href="login.html" class="pub-admin-link">Área administrativa →</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="pub-page-hero">
+      <div class="pub-container">
+        <h1 class="pub-page-title">Nossas Salas</h1>
+        <p class="pub-page-sub">Espaços privativos, equipados e prontos para atendimento em Uberlândia</p>
+      </div>
+    </section>
+
+    <section class="pub-section">
+      <div class="pub-container">
+        <div id="salas-grid" class="pub-room-grid">
+          <div class="pub-loading">
+            <div class="pub-spinner"></div>
+            Carregando salas…
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="pub-footer">
+    <div class="pub-container">
+      <p class="pub-footer-text">© 2026 Espaço Habita &nbsp;·&nbsp; <a href="login.html" class="pub-footer-link">Painel administrativo</a></p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/supabase.js?v=7"></script>
+  <script src="js/ui.js?v=7"></script>
+  <script src="js/salas.js?v=7"></script>
+</body>
+</html>

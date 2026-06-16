@@ -29,6 +29,9 @@
 
       // Signal page-specific JS that auth is ready
       document.dispatchEvent(new CustomEvent('auth:ready'));
+
+      // Load request badge on all admin pages
+      if (window.UI && window.UI.loadRequestBadge) window.UI.loadRequestBadge();
     }
   });
 
