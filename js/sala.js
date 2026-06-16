@@ -140,16 +140,27 @@
   function prefillDate(dateStr) {
     var startEl = document.getElementById('req-start');
     if (!startEl) return;
+
+    // Mark selected day in calendar
+    document.querySelectorAll('.avail-day--selected').forEach(function (el) {
+      el.classList.remove('avail-day--selected');
+    });
+    var btn = document.querySelector('.avail-day[data-date="' + dateStr + '"]');
+    if (btn) btn.classList.add('avail-day--selected');
+
     var currentTime = startEl.value ? startEl.value.slice(11, 16) : '09:00';
     startEl.value = dateStr + 'T' + currentTime;
     updateEndFromStart();
-    document.getElementById('req-start').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    // Highlight the clicked form section
+
+    // Scroll to the form section
     var formSection = document.getElementById('form-section');
-    if (formSection) formSection.classList.add('pub-form-highlight');
-    setTimeout(function () {
-      if (formSection) formSection.classList.remove('pub-form-highlight');
-    }, 1000);
+    if (formSection) {
+      formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      formSection.classList.add('pub-form-highlight');
+      setTimeout(function () {
+        formSection.classList.remove('pub-form-highlight');
+      }, 800);
+    }
   }
 
   // ---- Request form ---------------------------------------
@@ -316,7 +327,12 @@
     var roomId = params.get('id');
 
     if (!roomId) {
-      document.getElementById('sala-hero-name').textContent = 'Sala não encontrada';
+      var nameEl = document.getElementById('sala-hero-name');
+      if (nameEl) nameEl.textContent = 'Sala não encontrada';
+      var availSec = document.querySelector('.pub-section--tinted');
+      var formSec  = document.getElementById('form-section');
+      if (availSec) availSec.hidden = true;
+      if (formSec)  formSec.hidden  = true;
       return;
     }
 
@@ -344,7 +360,12 @@
       var blocksRes   = results[2];
 
       if (roomRes.error || !roomRes.data) {
-        document.getElementById('sala-hero-name').textContent = 'Sala não encontrada';
+        var nameEl2 = document.getElementById('sala-hero-name');
+        if (nameEl2) nameEl2.textContent = 'Sala não encontrada';
+        var availSec2 = document.querySelector('.pub-section--tinted');
+        var formSec2  = document.getElementById('form-section');
+        if (availSec2) availSec2.hidden = true;
+        if (formSec2)  formSec2.hidden  = true;
         return;
       }
 

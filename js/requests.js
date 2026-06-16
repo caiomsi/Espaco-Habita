@@ -34,11 +34,7 @@
     if (!container) return;
 
     if (!requests || requests.length === 0) {
-      container.innerHTML =
-        '<div class="requests-empty">' +
-          '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
-          '<p>Nenhuma solicitação pendente.</p>' +
-        '</div>';
+      container.innerHTML = emptyStateHtml('Nenhuma solicitação pendente', 'Quando um profissional solicitar uma sala pela página pública, o pedido aparecerá aqui para aprovação.');
       return;
     }
 
@@ -160,8 +156,29 @@
 
   function handleDecline(req, card) {
     var declineBtn = card.querySelector('[data-action="decline"]');
+
+    // First tap: ask for confirmation
+    if (!declineBtn.dataset.confirming) {
+      declineBtn.dataset.confirming = '1';
+      declineBtn.textContent = 'Confirmar recusa?';
+      declineBtn.classList.add('req-decline-btn--warn');
+      var timer = setTimeout(function () {
+        if (declineBtn.dataset.confirming) {
+          delete declineBtn.dataset.confirming;
+          declineBtn.textContent = '✕ Recusar';
+          declineBtn.classList.remove('req-decline-btn--warn');
+        }
+      }, 3000);
+      declineBtn.dataset.timer = timer;
+      return;
+    }
+
+    // Second tap: proceed
+    clearTimeout(Number(declineBtn.dataset.timer));
+    delete declineBtn.dataset.confirming;
     declineBtn.disabled = true;
     declineBtn.textContent = 'Recusando…';
+    declineBtn.classList.remove('req-decline-btn--warn');
 
     window.sb.from('bookings')
       .update({ status: 'recusado' })
@@ -180,15 +197,19 @@
       });
   }
 
+  function emptyStateHtml(title, msg) {
+    return '<div class="requests-empty">' +
+      '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+      '<p class="requests-empty-title">' + title + '</p>' +
+      '<p class="requests-empty-msg">' + msg + '</p>' +
+    '</div>';
+  }
+
   function checkEmpty() {
     var container = document.getElementById('requests-list');
     if (!container) return;
     if (container.querySelectorAll('.req-card').length === 0) {
-      container.innerHTML =
-        '<div class="requests-empty">' +
-          '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
-          '<p>Nenhuma solicitação pendente.</p>' +
-        '</div>';
+      container.innerHTML = emptyStateHtml('Tudo em dia!', 'Todas as solicitações foram processadas.');
     }
   }
 

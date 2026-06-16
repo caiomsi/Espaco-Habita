@@ -12,7 +12,12 @@
     if (!grid) return;
 
     if (!rooms || rooms.length === 0) {
-      grid.innerHTML = '<p class="pub-empty">Nenhuma sala disponível no momento.</p>';
+      grid.innerHTML =
+        '<div class="pub-empty-state">' +
+          '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
+          '<p class="pub-empty-title">Nenhuma sala cadastrada</p>' +
+          '<p class="pub-empty-msg">As salas disponíveis aparecerão aqui em breve.</p>' +
+        '</div>';
       return;
     }
 
@@ -63,7 +68,11 @@
       .then(function (res) {
         if (res.error) {
           var grid = document.getElementById('salas-grid');
-          if (grid) grid.innerHTML = '<p class="pub-empty">Não foi possível carregar as salas.</p>';
+          if (grid) grid.innerHTML =
+            '<div class="pub-empty-state">' +
+              '<p class="pub-empty-title">Não foi possível carregar as salas</p>' +
+              '<p class="pub-empty-msg">Verifique sua conexão e <a href="salas.html">tente novamente</a>.</p>' +
+            '</div>';
           return;
         }
         renderRooms(res.data || []);

@@ -1974,3 +1974,228 @@ h1, h2, h3, h4 { line-height: 1.3; font-weight: 600; }
   .req-card-actions  { flex-direction: column; }
   .req-card-actions .btn { width: 100%; justify-content: center; padding: .9rem; font-size: 1rem; }
 }
+
+/* ============================================================
+   DESIGN POLISH — v8
+   Refinements to public + admin pages for a more premium,
+   cohesive feel while staying within the warm-terracotta system.
+   ============================================================ */
+
+/* ---- Public header ---- */
+.pub-header-inner { padding: 1rem 2rem; }
+.pub-brand-name {
+  font-size: 1.45rem; letter-spacing: -.02em;
+}
+
+/* ---- Page hero — decorative accent ---- */
+.pub-page-hero { padding: 4rem 0 3.5rem; }
+.pub-page-title { letter-spacing: -.025em; }
+.pub-page-title::after {
+  content: '';
+  display: block;
+  width: 2.5rem; height: 2px;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--terra-200) 100%);
+  margin: .9rem auto 0;
+  border-radius: 1px;
+}
+.pub-page-sub { font-size: 1rem; margin-top: .25rem; }
+
+/* ---- Room grid / card ---- */
+.pub-room-grid { gap: 2rem; padding: 1.5rem 0 3.5rem; }
+.pub-room-card {
+  border-radius: var(--radius-xl);
+  border-color: var(--warm-200);
+  box-shadow: 0 1px 4px rgba(50,30,10,.06);
+}
+.pub-room-card:hover {
+  box-shadow: 0 8px 32px rgba(50,30,10,.14);
+  border-color: var(--warm-300);
+  transform: translateY(-5px);
+}
+.pub-room-card-body { padding: 1.5rem; gap: 1rem; }
+.pub-room-name { font-size: 1.4rem; letter-spacing: -.015em; }
+.pub-rate-chip { font-size: .8rem; letter-spacing: .02em; }
+.pub-capacity-badge { font-size: .78rem; }
+
+/* ---- Public CTA button ---- */
+.pub-cta-btn {
+  padding: .85rem 1.75rem;
+  letter-spacing: .025em;
+  font-size: .875rem;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 8px rgba(196,122,53,.25);
+}
+.pub-cta-btn:hover {
+  box-shadow: 0 4px 16px rgba(196,122,53,.35);
+}
+
+/* ---- Sala hero ---- */
+.sala-hero-photo { position: relative; }
+.sala-hero-photo::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, rgba(10,7,4,0) 35%, rgba(10,7,4,.65) 100%);
+  pointer-events: none;
+}
+.sala-hero-content { padding: 2.5rem 0 3rem; }
+.sala-hero-name { letter-spacing: -.025em; line-height: 1.07; }
+.sala-hero-desc { color: rgba(255,255,255,.75); line-height: 1.7; }
+
+/* ---- Availability grid wrapper ---- */
+.avail-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+.avail-dow-headers { gap: 6px; margin-bottom: 6px; }
+.avail-dow {
+  font-size: .65rem; letter-spacing: .1em;
+  padding-bottom: .4rem;
+}
+.avail-days { gap: 6px; }
+.avail-day { font-size: .84rem; font-weight: 600; }
+
+/* Swap generic green for the forest palette on free days */
+.avail-day--free {
+  background: var(--forest-50);
+  color: var(--forest-600);
+  border-color: rgba(58,92,68,.18);
+}
+.avail-day--free:hover {
+  background: var(--forest-100);
+  border-color: var(--forest-400);
+  box-shadow: 0 2px 8px rgba(58,92,68,.2);
+}
+.avail-day--free.avail-day--today { outline-color: var(--primary); }
+.avail-legend { margin-top: 1.25rem; justify-content: flex-start; gap: 1.5rem; }
+.avail-legend--free::before { background: var(--forest-50); border-color: rgba(58,92,68,.25); }
+
+/* ---- Public form groups — terracotta top accent ---- */
+.pub-form-group {
+  border-radius: var(--radius-xl);
+  border-color: var(--warm-200);
+  border-top: 3px solid var(--primary);
+  background: var(--warm-50);
+  padding: 1.75rem;
+}
+.pub-form-group-title {
+  color: var(--primary);
+  font-size: .72rem;
+  letter-spacing: .08em;
+  margin-bottom: 1.25rem;
+}
+
+/* ---- Rate preset pills — refined ---- */
+.rate-preset-pill {
+  font-size: .82rem; font-weight: 600; letter-spacing: .025em;
+  padding: .45rem 1.1rem;
+  border-radius: var(--radius);
+}
+.rate-preset-pill--active {
+  box-shadow: 0 2px 10px rgba(196,122,53,.3);
+}
+
+/* ---- Price preview ---- */
+.pub-price-preview {
+  background: linear-gradient(120deg, var(--amber-100) 0%, #fef8e7 100%);
+  border-color: rgba(245,158,11,.35);
+  border-radius: var(--radius);
+  font-size: .9rem; font-weight: 500;
+  padding: .8rem 1.1rem;
+  margin-top: .75rem;
+}
+
+/* ---- Form CTA ---- */
+.pub-form-disclaimer { margin-top: .5rem; }
+
+/* ---- Success state ---- */
+.pub-success { border-radius: var(--radius-xl); }
+.pub-success-icon { color: var(--forest-500); }
+
+/* ---- Request cards — left accent stripe ---- */
+.req-card {
+  border-radius: var(--radius-xl);
+  border-left: 4px solid var(--primary);
+}
+.req-card--conflict { border-left-color: var(--red-600); }
+.req-card-header { padding: 1.25rem 1.5rem 1rem; }
+.req-card-room { font-size: 1.35rem; }
+.req-card-date {
+  font-size: .8rem; padding: .4rem .85rem;
+  border-radius: var(--radius);
+  background: var(--terra-50);
+  color: var(--primary);
+  border: 1px solid var(--terra-100);
+  font-weight: 600;
+}
+.req-card-body { padding: .75rem 1.5rem 0; }
+.req-card-actions { padding: .75rem 1.5rem 1.25rem; }
+
+/* Requests empty state — put in a card */
+.requests-empty {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 4rem 2rem;
+}
+
+/* ---- Sidebar badge — slightly larger ---- */
+.sidebar-badge { font-size: .68rem; padding: .12em .52em; }
+
+/* ---- Calendar selected day ---- */
+.avail-day--free.avail-day--selected {
+  background: var(--terra-50);
+  color: var(--terra-600);
+  border-color: var(--primary);
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+  font-weight: 700;
+}
+
+/* ---- Decline confirmation state ---- */
+.req-decline-btn--warn {
+  border-color: var(--red-500) !important;
+  color: var(--red-600) !important;
+  background: var(--red-50) !important;
+}
+
+/* ---- Public empty states (salas.html) ---- */
+.pub-empty-state {
+  grid-column: 1/-1;
+  text-align: center;
+  padding: 4rem 1rem;
+  color: var(--warm-400);
+}
+.pub-empty-state svg { margin-bottom: 1rem; opacity: .45; }
+.pub-empty-title {
+  font-family: var(--font-display); font-style: italic; font-weight: 600;
+  font-size: var(--font-size-xl); color: var(--warm-600);
+  margin-bottom: .4rem;
+}
+.pub-empty-msg { font-size: var(--font-size-sm); color: var(--warm-400); line-height: 1.6; }
+.pub-empty-msg a { color: var(--primary); }
+
+/* ---- Requests empty state typography ---- */
+.requests-empty-title {
+  font-family: var(--font-display); font-style: italic; font-weight: 600;
+  font-size: var(--font-size-xl); color: var(--forest-600);
+  margin: .75rem 0 .35rem;
+}
+.requests-empty-msg {
+  font-size: var(--font-size-sm); color: var(--warm-400); line-height: 1.6;
+  max-width: 400px; margin: 0 auto;
+}
+
+/* ---- v8 responsive tweaks ---- */
+@media (max-width: 640px) {
+  .pub-header-inner { padding: .85rem 1.25rem; }
+  .pub-page-hero { padding: 2.5rem 0 2rem; }
+  .pub-room-grid { gap: 1.25rem; }
+  .pub-form-group { padding: 1.25rem; }
+  .avail-wrap { padding: 1rem; }
+  .req-card-header { padding: 1rem 1.25rem .75rem; }
+  .req-card-body { padding: .5rem 1.25rem 0; }
+  .req-card-actions { padding: .75rem 1.25rem 1rem; }
+}
