@@ -201,16 +201,17 @@
           block.className = 'booking-block';
           if (booking.status === 'cancelado') block.classList.add('cancelado');
           if (booking.status === 'pendente')  block.classList.add('pendente');
+          if (booking.series_id)              block.classList.add('booking-block--series');
           block.style.backgroundColor = color;
           block.title =
-            booking.client_name + '\n' +
+            booking.client_name + (booking.series_id ? ' ↻' : '') + '\n' +
             window.UI.formatTime(booking.starts_at) + '–' +
             window.UI.formatTime(booking.ends_at) +
             (booking.client_phone ? '\n' + booking.client_phone : '') +
             (booking.notes        ? '\n' + booking.notes        : '');
 
           block.innerHTML =
-            '<span class="block-name">' + escHtml(booking.client_name) + '</span>' +
+            '<span class="block-name">' + escHtml(booking.client_name) + (booking.series_id ? ' ↻' : '') + '</span>' +
             '<span class="block-time">' +
               window.UI.formatTime(booking.starts_at) + '–' +
               window.UI.formatTime(booking.ends_at) +
@@ -336,7 +337,7 @@
           '<span class="day-item-time">' +
             window.UI.formatTime(booking.starts_at) + '–' + window.UI.formatTime(booking.ends_at) +
           '</span>' +
-          '<span class="day-item-name">' + escHtml(booking.client_name) + '</span>' +
+          '<span class="day-item-name">' + escHtml(booking.client_name) + (booking.series_id ? ' ↻' : '') + '</span>' +
           '<span class="badge badge--' + booking.status + '">' + escHtml(statusLabel) + '</span>';
         row.addEventListener('click', function () {
           window.UI.closeAllModals();

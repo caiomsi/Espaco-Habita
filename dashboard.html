@@ -99,6 +99,7 @@
           </button>
           <button id="today-btn" class="btn btn-ghost btn-sm">Hoje</button>
           <button id="new-booking-btn" class="btn btn-primary btn-sm">+ Nova Reserva</button>
+          <button id="new-series-btn" class="btn btn-ghost btn-sm">↻ Recorrência</button>
           <button id="block-room-btn" class="btn btn-ghost btn-sm">⊘ Bloquear sala</button>
           <a href="rooms.html" class="btn btn-ghost btn-sm">Salas</a>
         </div>
@@ -247,6 +248,109 @@
     </div>
   </div>
 
+  <!-- Series modal (recurring booking creation / edit) -->
+  <div id="series-modal" class="modal-overlay" hidden
+       role="dialog" aria-modal="true" aria-labelledby="series-modal-title">
+    <div class="modal-box modal-box--wide">
+      <div class="modal-header">
+        <h2 id="series-modal-title">Nova Recorrência</h2>
+        <button class="modal-close" aria-label="Fechar">&times;</button>
+      </div>
+      <form id="series-form" novalidate>
+
+        <div class="form-field">
+          <label for="sr-client">Cliente *</label>
+          <div class="client-autocomplete-wrap">
+            <input type="text" id="sr-client" name="client_name" required
+                   placeholder="Digite o nome do cliente…" autocomplete="off">
+            <input type="hidden" id="sr-client-id">
+            <div id="sr-client-suggestions" class="client-suggestions" hidden></div>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="sr-room">Sala *</label>
+          <select id="sr-room" required>
+            <option value="">— Selecione —</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label>Dias da semana *</label>
+          <div class="sr-dow-grid">
+            <label class="sr-dow-label"><input type="checkbox" id="sr-dow-0"> Seg</label>
+            <label class="sr-dow-label"><input type="checkbox" id="sr-dow-1"> Ter</label>
+            <label class="sr-dow-label"><input type="checkbox" id="sr-dow-2"> Qua</label>
+            <label class="sr-dow-label"><input type="checkbox" id="sr-dow-3"> Qui</label>
+            <label class="sr-dow-label"><input type="checkbox" id="sr-dow-4"> Sex</label>
+            <label class="sr-dow-label"><input type="checkbox" id="sr-dow-5"> Sáb</label>
+            <label class="sr-dow-label"><input type="checkbox" id="sr-dow-6"> Dom</label>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label for="sr-start-time">Início *</label>
+            <input type="time" id="sr-start-time" step="900" required>
+          </div>
+          <div class="form-field">
+            <label for="sr-end-time">Término *</label>
+            <input type="time" id="sr-end-time" step="900" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label for="sr-starts-on">Primeira ocorrência *</label>
+            <input type="date" id="sr-starts-on" required>
+          </div>
+          <div class="form-field">
+            <label for="sr-ends-on">Última ocorrência <span style="font-weight:400;color:var(--warm-400)">(opcional)</span></label>
+            <input type="date" id="sr-ends-on">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label for="sr-rate">Valor cobrado (R$)</label>
+            <input type="number" id="sr-rate" min="0" step="0.01" placeholder="0,00">
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="sr-notes">Observações</label>
+          <textarea id="sr-notes" rows="2" placeholder="Notas internas…"></textarea>
+        </div>
+
+        <p id="series-error" class="form-error" hidden></p>
+        <div id="sr-conflict-preview" class="sr-conflict-preview" hidden></div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost modal-close">Cancelar</button>
+          <button type="button" id="sr-check-btn" class="btn btn-ghost">Verificar conflitos</button>
+          <button type="button" id="sr-create-btn" class="btn btn-primary" hidden>Criar recorrência</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scope dialog: one occurrence vs. this and all future -->
+  <div id="series-scope-modal" class="modal-overlay" hidden
+       role="dialog" aria-modal="true" aria-labelledby="scope-modal-title">
+    <div class="modal-box modal-box--narrow">
+      <div class="modal-header">
+        <h2 id="scope-modal-title">Editar recorrência</h2>
+        <button class="modal-close" aria-label="Fechar">&times;</button>
+      </div>
+      <p id="scope-modal-desc" class="scope-modal-desc">Deseja editar apenas esta reserva ou esta e todas as seguintes?</p>
+      <div class="modal-actions modal-actions--col">
+        <button type="button" id="scope-only-this-btn" class="btn btn-ghost">Apenas esta ocorrência</button>
+        <button type="button" id="scope-all-future-btn" class="btn btn-primary">Esta e as seguintes</button>
+        <button type="button" class="btn btn-ghost btn-sm modal-close" style="align-self:center">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Blocked time modal -->
   <div id="blocked-modal" class="modal-overlay" hidden
        role="dialog" aria-modal="true" aria-labelledby="blocked-modal-title">
@@ -292,9 +396,10 @@
   <script src="js/auth.js?v=7"></script>
   <script src="js/ui.js?v=7"></script>
   <script src="js/overlap.js?v=9"></script>
-  <script src="js/bookings.js?v=7"></script>
+  <script src="js/bookings.js?v=8"></script>
   <script src="js/bk-picker.js?v=7"></script>
-  <script src="js/calendar.js?v=7"></script>
+  <script src="js/calendar.js?v=8"></script>
   <script src="js/blocked.js?v=7"></script>
+  <script src="js/series.js?v=1"></script>
 </body>
 </html>

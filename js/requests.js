@@ -143,6 +143,7 @@
             return;
           }
           window.UI.toast('Reserva de ' + req.client_name + ' confirmada.', 'ok');
+          if (window.Email) window.Email.send('confirmado', req.id);
           card.classList.add('req-card--done');
           setTimeout(function () { card.remove(); checkEmpty(); }, 500);
           updateBadge();
@@ -191,6 +192,7 @@
           return;
         }
         window.UI.toast('Solicitação de ' + req.client_name + ' recusada.', 'ok');
+        if (window.Email) window.Email.send('recusado', req.id);
         card.classList.add('req-card--done');
         setTimeout(function () { card.remove(); checkEmpty(); }, 500);
         updateBadge();

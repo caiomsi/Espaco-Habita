@@ -2161,6 +2161,46 @@ h1, h2, h3, h4 { line-height: 1.3; font-weight: 600; }
   background: var(--red-50) !important;
 }
 
+/* ============================================================
+   PHASE 3 — Recurring bookings
+   ============================================================ */
+
+/* Calendar indicator for series bookings */
+.booking-block--series { border-left: 3px solid rgba(255,255,255,.5); }
+
+/* Days-of-week checkbox row */
+.sr-dow-grid { display: flex; flex-wrap: wrap; gap: .4rem; padding-top: .2rem; }
+.sr-dow-label {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .3rem .65rem; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--warm-50);
+  cursor: pointer; font-size: var(--font-size-sm);
+  transition: background .12s, border-color .12s, color .12s;
+  user-select: none;
+}
+.sr-dow-label:has(input:checked) {
+  background: var(--primary-light); border-color: var(--primary);
+  color: var(--primary); font-weight: 600;
+}
+.sr-dow-label input { display: none; }
+
+/* Conflict preview area inside series modal */
+.sr-conflict-preview {
+  padding: .75rem 1rem; border-radius: var(--radius);
+  background: var(--warm-50); border: 1px solid var(--border);
+  font-size: var(--font-size-sm); line-height: 1.55;
+}
+.sr-conflict-preview p { margin: 0 0 .35rem; }
+.sr-conflict-preview p:last-child { margin-bottom: 0; }
+.sr-preview-ok   { color: #15803d; }
+.sr-preview-warn { color: #92400e; }
+.sr-preview-info { color: var(--warm-700); }
+
+/* Scope dialog */
+.scope-modal-desc { color: var(--warm-600); margin: .25rem 0 1.5rem; line-height: 1.55; }
+.modal-box--narrow { max-width: 400px; }
+.modal-actions--col { flex-direction: column; align-items: stretch; gap: .6rem; }
+
 /* ---- Public empty states (salas.html) ---- */
 .pub-empty-state {
   grid-column: 1/-1;

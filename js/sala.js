@@ -298,7 +298,7 @@
           requester_email:     email.trim(),
           requester_specialty: specialty.trim(),
           notes:               notesFull
-        }).then(function (res) {
+        }).select('id').then(function (res) {
           if (res.error) {
             var msg = res.error.message || '';
             if (msg.indexOf('no_overlapping') !== -1 || msg.indexOf('exclusion') !== -1) {
@@ -309,6 +309,8 @@
             if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Enviar solicitação'; }
             return;
           }
+          var bookingId = res.data && res.data[0] && res.data[0].id;
+          if (bookingId && window.Email) window.Email.send('solicitado', bookingId);
           showSuccess();
         });
       }).catch(function () {

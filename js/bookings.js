@@ -441,6 +441,11 @@
     if (deleteBtn) {
       deleteBtn.addEventListener('click', function () {
         if (!currentBooking) return;
+        if (currentBooking.series_id && window.Series) {
+          window.UI.closeAllModals();
+          window.Series.handleDeleteScope(currentBooking);
+          return;
+        }
         if (!confirm('Excluir a reserva de ' + currentBooking.client_name + '?')) return;
         window.sb.from('bookings').delete().eq('id', currentBooking.id)
           .then(function (res) {
