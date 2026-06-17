@@ -288,7 +288,15 @@
         var rateLbl = RATE_PRESETS[state.activeRate].label;
         var notesFull = ('Tarifa: ' + rateLbl + (notes.trim() ? '\n' + notes.trim() : ''));
 
+        // Generate the booking id client-side so we can reference it for the
+        // confirmation email without an INSERT ... RETURNING (which the anon
+        // SELECT policy forbids on a 'solicitado' row).
+        var bookingId = (window.crypto && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : (Date.now() + '-' + Math.random().toString(16).slice(2));
+
         window.sb.from('bookings').insert({
+          id:                  bookingId,
           room_id:             roomId,
           client_name:         name.trim(),
           client_phone:        phone.trim() || null,
@@ -298,7 +306,7 @@
           requester_email:     email.trim(),
           requester_specialty: specialty.trim(),
           notes:               notesFull
-        }).select('id').then(function (res) {
+        }).then(function (res) {
           if (res.error) {
             var msg = res.error.message || '';
             if (msg.indexOf('no_overlapping') !== -1 || msg.indexOf('exclusion') !== -1) {
@@ -309,8 +317,7 @@
             if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Enviar solicitação'; }
             return;
           }
-          var bookingId = res.data && res.data[0] && res.data[0].id;
-          if (bookingId && window.Email) window.Email.send('solicitado', bookingId);
+          if (window.Email) window.Email.send('solicitado', bookingId);
           showSuccess();
         });
       }).catch(function () {
