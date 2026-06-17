@@ -289,17 +289,15 @@
         var notesFull = ('Tarifa: ' + rateLbl + (notes.trim() ? '\n' + notes.trim() : ''));
 
         window.sb.from('bookings').insert({
-          room_id:              roomId,
-          client_name:          name.trim(),
-          client_phone:         phone.trim() || null,
-          starts_at:            startsAt,
-          ends_at:              endsAt,
-          status:               'solicitado',
-          client_id:            null,
-          requester_email:      email.trim(),
-          requester_specialty:  specialty.trim(),
-          notes:                notesFull,
-          rate_applied:         price != null ? price : null
+          room_id:             roomId,
+          client_name:         name.trim(),
+          client_phone:        phone.trim() || null,
+          starts_at:           startsAt,
+          ends_at:             endsAt,
+          status:              'solicitado',
+          requester_email:     email.trim(),
+          requester_specialty: specialty.trim(),
+          notes:               notesFull
         }).then(function (res) {
           if (res.error) {
             var msg = res.error.message || '';

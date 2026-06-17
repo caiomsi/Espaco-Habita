@@ -13,7 +13,7 @@
       .gt('ends_at', startsAt);
 
     var bookingsQ = window.sb.from('bookings')
-      .select('id, client_name')
+      .select('id')
       .eq('room_id', roomId)
       .in('status', ['confirmado', 'pendente'])
       .lt('starts_at', endsAt)

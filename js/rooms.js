@@ -118,6 +118,7 @@
     document.getElementById('rm-rate-hourly').value  = room.rate_hourly || '';
     document.getElementById('rm-rate-daily').value   = room.rate_daily  || '';
     document.getElementById('rm-rate-weekly').value  = room.rate_weekly || '';
+    document.getElementById('rm-photo-url').value    = room.photo_url   || '';
     window.UI.openModal('room-modal');
   }
 
@@ -179,13 +180,16 @@
       var rateDaily   = parseFloat(document.getElementById('rm-rate-daily').value);
       var rateWeekly  = parseFloat(document.getElementById('rm-rate-weekly').value);
 
+      var photoUrl = (document.getElementById('rm-photo-url').value || '').trim();
+
       var payload = {
         name:        name,
         description: document.getElementById('rm-description').value.trim() || null,
         capacity:    isNaN(capacity)   ? null : capacity,
         rate_hourly: isNaN(rateHourly) ? null : rateHourly,
         rate_daily:  isNaN(rateDaily)  ? null : rateDaily,
-        rate_weekly: isNaN(rateWeekly) ? null : rateWeekly
+        rate_weekly: isNaN(rateWeekly) ? null : rateWeekly,
+        photo_url:   photoUrl          || null
       };
 
       window.UI.setLoading(saveBtn, true);
