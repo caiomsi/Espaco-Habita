@@ -36,8 +36,14 @@
   // ---- Core: generate + conflict check ----------------------
 
   // Returns [{starts_at, ends_at, date_str}, …] for all matching days in the rule window.
+  // When fromDate is given (editing a series forward), never generate before today —
+  // past/completed occurrences must not be regenerated.
   function generateOccurrences(rule, fromDate) {
-    var startStr  = fromDate || rule.starts_on;
+    var startStr = fromDate || rule.starts_on;
+    if (fromDate) {
+      var todayStr = window.UI.localDateStr(new Date());
+      if (startStr < todayStr) startStr = todayStr;
+    }
     var current   = new Date(startStr + 'T12:00:00-03:00');
     var limitDate = rule.ends_on
       ? new Date(rule.ends_on + 'T12:00:00-03:00')
@@ -67,11 +73,12 @@
   }
 
   // Runs window.checkOverlap for every occurrence in parallel.
+  // excludeSeriesId: when editing, skip this series' own (soon-to-be-replaced) rows.
   // Returns Promise<{free: [...], conflicts: [...]}>
-  function checkAllConflicts(roomId, occurrences) {
+  function checkAllConflicts(roomId, occurrences, excludeSeriesId) {
     if (occurrences.length === 0) return Promise.resolve({ free: [], conflicts: [] });
     var checks = occurrences.map(function (o) {
-      return window.checkOverlap(roomId, o.starts_at, o.ends_at, null);
+      return window.checkOverlap(roomId, o.starts_at, o.ends_at, null, excludeSeriesId || null);
     });
     return Promise.all(checks).then(function (results) {
       var free = [], conflicts = [];
@@ -82,23 +89,24 @@
     });
   }
 
-  // Inserts multiple booking rows sharing the same series_id.
-  function batchInsertBookings(occurrences, seriesId, client, roomId, rate, notes) {
-    var rows = occurrences.map(function (o) {
-      return {
-        room_id:      roomId,
-        client_name:  client.name,
-        client_phone: client.phone || null,
-        client_id:    client.id   || null,
-        starts_at:    o.starts_at,
-        ends_at:      o.ends_at,
-        status:       'confirmado',
-        notes:        notes  || null,
-        rate_applied: rate   || null,
-        series_id:    seriesId,
-      };
-    });
-    return window.sb.from('bookings').insert(rows);
+  // Builds the jsonb `p_series` / `p_rule` payload the atomic RPCs expect.
+  // includeStartsOn: true for creation (NOT NULL on the rule); omitted on reschedule
+  // because the series' first-occurrence date is never moved by an edit.
+  function buildSeriesPayload(data, includeStartsOn) {
+    var p = {
+      room_id:      data.rule.room_id,
+      client_id:    data.rule.client_id,
+      client_name:  data.rule.client_name,
+      client_phone: data.client ? data.client.phone : null,
+      days_of_week: data.rule.days_of_week,
+      start_time:   data.rule.start_time,
+      end_time:     data.rule.end_time,
+      rate_applied: data.rule.rate_applied,
+      notes:        data.rule.notes,
+      ends_on:      data.rule.ends_on,
+    };
+    if (includeStartsOn) p.starts_on = data.rule.starts_on;
+    return p;
   }
 
   // ---- Conflict preview UI -----------------------------------
@@ -375,7 +383,7 @@
       return;
     }
 
-    checkAllConflicts(data.roomId, occurrences).then(function (result) {
+    checkAllConflicts(data.roomId, occurrences, _editingSeriesId).then(function (result) {
       pendingFree = result.free;
       showConflictPreview(result.free, result.conflicts, occurrences.length);
       if (checkBtn) { checkBtn.disabled = false; checkBtn.textContent = 'Verificar conflitos'; }
@@ -401,101 +409,63 @@
   }
 
   function doCreateNew(data, saveBtn) {
-    window.sb.from('booking_series').insert({
-      room_id:      data.rule.room_id,
-      client_id:    data.rule.client_id,
-      client_name:  data.rule.client_name,
-      client_phone: data.client ? data.client.phone : null,
-      days_of_week: data.rule.days_of_week,
-      start_time:   data.rule.start_time,
-      end_time:     data.rule.end_time,
-      rate_applied: data.rule.rate_applied,
-      notes:        data.rule.notes,
-      starts_on:    data.rule.starts_on,
-      ends_on:      data.rule.ends_on,
-    }).select('id').single().then(function (res) {
-      if (res.error || !res.data) {
-        window.UI.toast('Erro ao criar série: ' + (res.error ? res.error.message : ''), 'erro');
+    // One atomic RPC: inserts the rule + every occurrence in a single transaction.
+    // If any occurrence hits the overlap constraint, the whole thing rolls back —
+    // no orphaned series row, no partial insert.
+    window.sb.rpc('create_booking_series', {
+      p_series:      buildSeriesPayload(data, true),
+      p_occurrences: pendingFree,
+    }).then(function (res) {
+      if (res.error) {
+        window.UI.toast('Não foi possível criar a recorrência — algum horário ficou indisponível. Verifique os conflitos novamente.', 'erro');
         if (saveBtn) { saveBtn.disabled = false; }
+        resetConflictPreview();
         return;
       }
-      batchInsertBookings(
-        pendingFree, res.data.id, data.client,
-        data.roomId, data.rule.rate_applied, data.rule.notes
-      ).then(function (r) {
-        if (r.error) {
-          window.UI.toast('Série criada, mas erro ao inserir reservas: ' + r.error.message, 'erro');
-        } else {
-          var n = pendingFree.length;
-          window.UI.toast(n + ' reserva' + (n === 1 ? '' : 's') + ' recorrente' + (n === 1 ? '' : 's') + ' criada' + (n === 1 ? '' : 's') + '.', 'ok');
-          window.UI.closeAllModals();
-          if (window.Calendar) window.Calendar.refresh();
-        }
-        if (saveBtn) { saveBtn.disabled = false; }
-      });
+      var n = pendingFree.length;
+      window.UI.toast(n + ' reserva' + (n === 1 ? '' : 's') + ' recorrente' + (n === 1 ? '' : 's') + ' criada' + (n === 1 ? '' : 's') + '.', 'ok');
+      window.UI.closeAllModals();
+      if (window.Calendar) window.Calendar.refresh();
     });
   }
 
   function doEditSeriesFuture(data, saveBtn) {
-    var seriesId    = _editingSeriesId;
-    var fromDateStr = pendingFromDate;
-
-    // 1. Delete future occurrences of this series
-    window.sb.from('bookings')
-      .delete()
-      .eq('series_id', seriesId)
-      .gte('starts_at', fromDateStr + 'T00:00:00-03:00')
-      .then(function (delRes) {
-        if (delRes.error) {
-          window.UI.toast('Erro ao remover ocorrências anteriores.', 'erro');
-          if (saveBtn) { saveBtn.disabled = false; }
-          return;
-        }
-
-        // 2. Update the rule
-        window.sb.from('booking_series').update({
-          room_id:      data.rule.room_id,
-          client_id:    data.rule.client_id,
-          client_name:  data.rule.client_name,
-          client_phone: data.client ? data.client.phone : null,
-          days_of_week: data.rule.days_of_week,
-          start_time:   data.rule.start_time,
-          end_time:     data.rule.end_time,
-          rate_applied: data.rule.rate_applied,
-          notes:        data.rule.notes,
-          ends_on:      data.rule.ends_on,
-        }).eq('id', seriesId).then(function () {
-          // 3. Re-insert free occurrences
-          batchInsertBookings(
-            pendingFree, seriesId, data.client,
-            data.roomId, data.rule.rate_applied, data.rule.notes
-          ).then(function (r) {
-            if (r.error) {
-              window.UI.toast('Erro ao recriar reservas: ' + r.error.message, 'erro');
-            } else {
-              var n = pendingFree.length;
-              window.UI.toast(n + ' reserva' + (n === 1 ? '' : 's') + ' atualizada' + (n === 1 ? '' : 's') + '.', 'ok');
-              window.UI.closeAllModals();
-              if (window.Calendar) window.Calendar.refresh();
-            }
-            if (saveBtn) { saveBtn.disabled = false; }
-          });
-        });
-      });
+    // One atomic RPC: deletes only FUTURE occurrences (>= max(fromDate, today)),
+    // updates the rule, and reinserts — all in a single transaction. A failed
+    // reinsert rolls back the delete, so future occurrences are never lost.
+    window.sb.rpc('reschedule_series_future', {
+      p_series_id:   _editingSeriesId,
+      p_from:        pendingFromDate,
+      p_rule:        buildSeriesPayload(data, false),
+      p_occurrences: pendingFree,
+    }).then(function (res) {
+      if (res.error) {
+        window.UI.toast('Não foi possível atualizar a recorrência — algum horário ficou indisponível. As ocorrências futuras foram preservadas; verifique os conflitos novamente.', 'erro');
+        if (saveBtn) { saveBtn.disabled = false; }
+        resetConflictPreview();
+        return;
+      }
+      var n = pendingFree.length;
+      window.UI.toast(n + ' reserva' + (n === 1 ? '' : 's') + ' atualizada' + (n === 1 ? '' : 's') + '.', 'ok');
+      window.UI.closeAllModals();
+      if (window.Calendar) window.Calendar.refresh();
+    });
   }
 
   // ---- Cancel series (this + future) ------------------------
 
+  // Soft-cancel via RPC: marks future occurrences 'cancelado' (history preserved),
+  // clamped to today so completed occurrences are never touched.
   function cancelSeriesFuture(seriesId, fromDateStr) {
-    window.sb.from('bookings')
-      .update({ status: 'cancelado' })
-      .eq('series_id', seriesId)
-      .gte('starts_at', fromDateStr + 'T00:00:00-03:00')
-      .then(function (res) {
-        if (res.error) { window.UI.toast('Erro ao cancelar ocorrências.', 'erro'); return; }
-        window.UI.toast('Ocorrências futuras canceladas.', 'ok');
-        if (window.Calendar) window.Calendar.refresh();
-      });
+    window.sb.rpc('cancel_series_future', {
+      p_series_id: seriesId,
+      p_from:      fromDateStr,
+    }).then(function (res) {
+      if (res.error) { window.UI.toast('Erro ao cancelar ocorrências.', 'erro'); return; }
+      var n = res.data;
+      window.UI.toast((n != null ? n + ' ' : '') + 'ocorrência' + (n === 1 ? '' : 's') + ' futura' + (n === 1 ? '' : 's') + ' cancelada' + (n === 1 ? '' : 's') + '.', 'ok');
+      if (window.Calendar) window.Calendar.refresh();
+    });
   }
 
   // ---- Scope dialog -----------------------------------------
@@ -542,13 +512,14 @@
     window.UI.openModal('series-scope-modal');
   }
 
+  // Single-occurrence cancel: soft-cancel (preserve history), never hard-delete.
   function doDeleteOne(booking) {
-    if (!confirm('Excluir apenas esta reserva de ' + booking.client_name + '?')) return;
-    window.sb.from('bookings').delete().eq('id', booking.id)
+    if (!confirm('Cancelar apenas esta reserva de ' + booking.client_name + '?')) return;
+    window.sb.from('bookings').update({ status: 'cancelado' }).eq('id', booking.id)
       .then(function (res) {
-        if (res.error) { window.UI.toast('Erro ao excluir reserva.', 'erro'); return; }
+        if (res.error) { window.UI.toast('Erro ao cancelar reserva.', 'erro'); return; }
         window.UI.closeAllModals();
-        window.UI.toast('Reserva excluída.', 'ok');
+        window.UI.toast('Reserva cancelada.', 'ok');
         if (window.Calendar) window.Calendar.refresh();
       });
   }
