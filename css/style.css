@@ -1053,6 +1053,115 @@ h1, h2, h3, h4 { line-height: 1.3; font-weight: 600; }
 
 .cal-empty a { color: var(--primary); font-weight: 500; }
 
+/* ---- Room label (click to focus on one room) ---- */
+.cal-room-label--clickable {
+  cursor: pointer;
+  transition: background .15s;
+}
+.cal-room-label--clickable:hover { background: rgba(196,122,53,.08); }
+.cal-room-label--clickable:hover .cal-room-name { color: var(--terra-600); }
+
+/* ---- Room context bar (shown when focused on a single room) ---- */
+.room-context-bar {
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+  flex-wrap: wrap;
+}
+
+.room-context-name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--warm-800);
+  margin: 0;
+}
+
+.view-mode-pills { display: flex; gap: .4rem; margin-left: auto; }
+.view-mode-pill {
+  padding: .35rem .85rem; border-radius: 9999px;
+  border: 1.5px solid var(--border-strong);
+  background: transparent; color: var(--warm-700);
+  font-family: var(--font-body); font-size: .8rem; font-weight: 500;
+  cursor: pointer; transition: background .15s, border-color .15s, color .15s;
+}
+.view-mode-pill:hover { background: var(--warm-100); }
+.view-mode-pill--active {
+  background: var(--primary); border-color: var(--primary);
+  color: #fff;
+}
+
+/* ---- Month grid (single-room focused view) ---- */
+.cal-table--month { min-width: 760px; }
+
+.cal-month-head {
+  text-align: center;
+  padding: .5rem .25rem;
+  background: var(--warm-50);
+  border-bottom: 1.5px solid var(--border);
+  border-right: 1px solid var(--border);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .10em;
+  color: var(--text-muted);
+}
+.cal-month-head:last-child { border-right: none; }
+
+.cal-month-cell {
+  vertical-align: top;
+  padding: .35rem;
+  min-height: 100px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .1s;
+}
+.cal-month-cell:last-child { border-right: none; }
+.cal-month-cell:hover { background: rgba(196,122,53,.05); }
+.cal-month-cell.today { background: rgba(196,122,53,.04); }
+.cal-month-cell.today:hover { background: rgba(196,122,53,.08); }
+.cal-month-cell--pad { opacity: .4; }
+
+.cal-month-daynum {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--warm-700);
+  margin-bottom: .3rem;
+  cursor: pointer;
+}
+.cal-month-cell.today .cal-month-daynum { color: var(--terra-500); font-weight: 600; }
+
+.cal-month-items { display: flex; flex-direction: column; gap: 2px; }
+
+.cal-month-pill {
+  border-radius: var(--radius-sm);
+  padding: .18rem .4rem;
+  font-size: .68rem;
+  font-weight: 500;
+  color: #fff;
+  background: var(--primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: filter .15s;
+}
+.cal-month-pill:hover { filter: brightness(1.1); }
+.cal-month-pill.cancelado { opacity: .35; text-decoration: line-through; }
+.cal-month-pill.pendente { opacity: .7; }
+.cal-month-pill--blocked { background: var(--warm-600); }
+
+.cal-month-more {
+  font-size: .68rem;
+  color: var(--text-muted);
+  padding: .12rem .4rem;
+  cursor: pointer;
+}
+.cal-month-more:hover { color: var(--terra-600); text-decoration: underline; }
+
 /* ============================================================
    ROOMS PAGE
    ============================================================ */
