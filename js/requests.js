@@ -73,7 +73,8 @@
     promise.then(function (tier) {
       if (!tier) return;
       container.innerHTML =
-        '<button type="button" class="rate-preset-chip" data-value="' + tier.price_public + '">Público: ' +
+        '<span class="rate-preset-label">Recomendado:</span>' +
+        '<button type="button" class="rate-preset-chip rate-preset-chip--active" data-value="' + tier.price_public + '">Público: ' +
           window.UI.formatCurrency(tier.price_public) + '</button>' +
         '<button type="button" class="rate-preset-chip" data-value="' + tier.price_professional + '">Profissional: ' +
           window.UI.formatCurrency(tier.price_professional) + '</button>';
@@ -87,6 +88,14 @@
           updatePricePreview(req.id);
         });
       });
+
+      // Pre-fill the recommended (public) price by default so a suggestion is
+      // always visible immediately, not just after clicking a chip.
+      var rateEl = document.getElementById('req-rate-' + req.id);
+      if (rateEl && !rateEl.value) {
+        rateEl.value = parseFloat(tier.price_public).toFixed(2);
+        updatePricePreview(req.id);
+      }
     });
   }
 

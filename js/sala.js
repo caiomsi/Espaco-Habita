@@ -88,6 +88,17 @@
     state.activeRate = String(tiers[0].duration_hours);
   }
 
+  // Salas Grande/Pequena/Sala 1 only sell by the hour (or packages, handled
+  // separately by staff) — no "dia inteiro"/"semana" product exists for them,
+  // so those pills would compute a misleading multiplied estimate. Restrict
+  // to a single "Por hora" option instead.
+  function renderHourOnlyPill() {
+    var container = document.querySelector('.rate-preset-pills');
+    if (!container) return;
+    container.innerHTML = '<button type="button" class="rate-preset-pill rate-preset-pill--active" data-rate="hora">Por hora</button>';
+    state.activeRate = 'hora';
+  }
+
   // ---- Room hero rendering --------------------------------
 
   function renderHero(room) {
@@ -454,11 +465,16 @@
           renderSalaoPills(tiers);
           finishBoot();
         });
-      } else if (['grande', 'pequena', 'sala1'].indexOf(group) !== -1 && !state.room.rate_hourly && window.Pricing) {
-        window.Pricing.getAvulsaRate(group).then(function (tier) {
-          state.avulsaRate = tier;
+      } else if (['grande', 'pequena', 'sala1'].indexOf(group) !== -1) {
+        renderHourOnlyPill();
+        if (!state.room.rate_hourly && window.Pricing) {
+          window.Pricing.getAvulsaRate(group).then(function (tier) {
+            state.avulsaRate = tier;
+            finishBoot();
+          });
+        } else {
           finishBoot();
-        });
+        }
       } else {
         finishBoot();
       }

@@ -150,10 +150,20 @@
     promise.then(function (tier) {
       if (!tier) { container.innerHTML = ''; return; }
       container.innerHTML =
-        '<button type="button" class="rate-preset-chip" data-value="' + tier.price_public + '">Público: ' +
+        '<span class="rate-preset-label">Recomendado:</span>' +
+        '<button type="button" class="rate-preset-chip rate-preset-chip--active" data-value="' + tier.price_public + '">Público: ' +
           window.UI.formatCurrency(tier.price_public) + '</button>' +
         '<button type="button" class="rate-preset-chip" data-value="' + tier.price_professional + '">Profissional: ' +
           window.UI.formatCurrency(tier.price_professional) + '</button>';
+
+      // Pre-fill the recommended (public) price by default so a suggestion is
+      // visible immediately, not just after clicking a chip.
+      var rateEl0 = document.getElementById('bk-rate-applied');
+      if (rateEl0 && !rateEl0.value) {
+        rateEl0.value = parseFloat(tier.price_public).toFixed(2);
+        rateEl0.dataset.lastDiscount = '0';
+      }
+
       container.querySelectorAll('.rate-preset-chip').forEach(function (btn) {
         btn.addEventListener('click', function () {
           var rateEl = document.getElementById('bk-rate-applied');
