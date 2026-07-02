@@ -3,6 +3,12 @@
 
   var TZ = 'America/Sao_Paulo';
 
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
   window.UI = {
 
     // ---- Modals ----------------------------------------
@@ -138,6 +144,31 @@
       return new Intl.NumberFormat('pt-BR', {
         style: 'currency', currency: 'BRL'
       }).format(parseFloat(val));
+    },
+
+    // ---- Bar-list breakdown (expenses.html + financeiro.html) ------
+
+    // rows = [{label, amount}] — renders a proportional horizontal bar per row,
+    // sorted descending by amount. No chart lib, plain CSS fill widths.
+    renderBarList: function (containerEl, rows) {
+      if (!containerEl) return;
+      if (!rows || rows.length === 0) {
+        containerEl.innerHTML = '<p class="bar-list-empty">Nenhum dado no período.</p>';
+        return;
+      }
+      var sorted = rows.slice().sort(function (a, b) { return b.amount - a.amount; });
+      var max = sorted[0].amount || 1;
+      var html = '';
+      sorted.forEach(function (r) {
+        var pct = max > 0 ? Math.max(2, (r.amount / max) * 100) : 0;
+        html +=
+          '<div class="bar-list-row">' +
+            '<span class="bar-list-label">' + escHtml(r.label) + '</span>' +
+            '<div class="bar-list-track"><div class="bar-list-fill" style="width:' + pct + '%"></div></div>' +
+            '<span class="bar-list-amount">' + window.UI.formatCurrency(r.amount) + '</span>' +
+          '</div>';
+      });
+      containerEl.innerHTML = html;
     },
 
     // ---- Sidebar request badge (admin pages only) -------

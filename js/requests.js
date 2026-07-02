@@ -27,6 +27,46 @@
     return 'há ' + days + ' dias';
   }
 
+  // ---- Pricing / discount row (R$ / % toggle, same math as bookings.js) ----
+
+  function suggestedRate(req) {
+    var room = req.rooms;
+    if (!room || !room.rate_hourly) return '';
+    var hours = (new Date(req.ends_at) - new Date(req.starts_at)) / 3600000;
+    if (hours <= 0) return '';
+    return (hours * parseFloat(room.rate_hourly)).toFixed(2);
+  }
+
+  function discountMode(reqId) {
+    var active = document.querySelector('#req-discmode-' + reqId + ' .discount-mode-pill--active');
+    return active ? active.dataset.mode : 'valor';
+  }
+
+  function setDiscountMode(reqId, mode) {
+    document.querySelectorAll('#req-discmode-' + reqId + ' .discount-mode-pill').forEach(function (p) {
+      p.classList.toggle('discount-mode-pill--active', p.dataset.mode === mode);
+    });
+  }
+
+  // Returns { baseRate, discountReais, finalRate } computed from the card's inputs.
+  function computePricing(reqId) {
+    var rateEl = document.getElementById('req-rate-' + reqId);
+    var discEl = document.getElementById('req-discount-' + reqId);
+    var baseRate = rateEl ? (parseFloat(rateEl.value) || 0) : 0;
+    var raw      = discEl ? (parseFloat(discEl.value) || 0) : 0;
+    var discountReais = discountMode(reqId) === 'percentual' ? (baseRate * raw / 100) : raw;
+    discountReais = Math.max(0, Math.min(discountReais, baseRate));
+    return { baseRate: baseRate, discountReais: discountReais, finalRate: baseRate - discountReais };
+  }
+
+  function updatePricePreview(reqId) {
+    var el = document.getElementById('req-price-final-' + reqId);
+    if (!el) return;
+    var p = computePricing(reqId);
+    if (!p.baseRate) { el.textContent = ''; return; }
+    el.textContent = 'Valor final: ' + new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.finalRate);
+  }
+
   // ---- Render list ----------------------------------------
 
   function renderList(requests) {
@@ -58,9 +98,26 @@
       ? '<p class="req-card-notes">' + escHtml(req.notes) + '</p>'
       : '';
 
-    var rateHtml = req.rate_applied
-      ? '<span class="req-meta-chip">' + new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(req.rate_applied) + '</span>'
-      : '';
+    var suggested = suggestedRate(req);
+
+    var pricingHtml =
+      '<div class="req-pricing-row">' +
+        '<div class="form-field">' +
+          '<label for="req-rate-' + req.id + '">Valor (R$)</label>' +
+          '<input type="number" id="req-rate-' + req.id + '" min="0" step="0.01" value="' + suggested + '" placeholder="0,00">' +
+        '</div>' +
+        '<div class="form-field">' +
+          '<label>Desconto</label>' +
+          '<div class="discount-row">' +
+            '<div class="discount-mode-pills" id="req-discmode-' + req.id + '">' +
+              '<button type="button" class="discount-mode-pill discount-mode-pill--active" data-mode="valor">R$</button>' +
+              '<button type="button" class="discount-mode-pill" data-mode="percentual">%</button>' +
+            '</div>' +
+            '<input type="number" id="req-discount-' + req.id + '" min="0" step="0.01" placeholder="0,00">' +
+          '</div>' +
+        '</div>' +
+        '<p class="req-price-final" id="req-price-final-' + req.id + '"></p>' +
+      '</div>';
 
     card.innerHTML =
       '<div class="req-card-header">' +
@@ -79,7 +136,7 @@
           (req.requester_email ? '<a href="mailto:' + escHtml(req.requester_email) + '">' + escHtml(req.requester_email) + '</a>' : '') +
           (req.client_phone ? '<a href="tel:' + escHtml(req.client_phone) + '">' + escHtml(req.client_phone) + '</a>' : '') +
         '</div>' +
-        (rateHtml ? '<div class="req-meta-chips">' + rateHtml + '</div>' : '') +
+        pricingHtml +
         notesHtml +
         '<p id="req-conflict-' + req.id + '" class="req-conflict-msg" hidden></p>' +
       '</div>' +
@@ -97,6 +154,19 @@
     card.querySelector('[data-action="decline"]').addEventListener('click', function () {
       handleDecline(req, card);
     });
+
+    // Wire pricing row (live preview)
+    card.querySelectorAll('#req-discmode-' + req.id + ' .discount-mode-pill').forEach(function (p) {
+      p.addEventListener('click', function () {
+        setDiscountMode(req.id, p.dataset.mode);
+        updatePricePreview(req.id);
+      });
+    });
+    var rateInput = card.querySelector('#req-rate-' + req.id);
+    var discInput = card.querySelector('#req-discount-' + req.id);
+    if (rateInput) rateInput.addEventListener('input', function () { updatePricePreview(req.id); });
+    if (discInput) discInput.addEventListener('input', function () { updatePricePreview(req.id); });
+    updatePricePreview(req.id);
   }
 
   // ---- Actions --------------------------------------------
@@ -123,8 +193,13 @@
       }
 
       approveBtn.textContent = 'Aprovando…';
+      var pricing = computePricing(req.id);
       window.sb.from('bookings')
-        .update({ status: 'confirmado' })
+        .update({
+          status: 'confirmado',
+          rate_applied: pricing.baseRate ? pricing.finalRate : null,
+          discount_amount: pricing.discountReais
+        })
         .eq('id', req.id)
         .then(function (res) {
           if (res.error) {
@@ -226,7 +301,7 @@
     if (container) container.innerHTML = '<div class="loading-state">Carregando…</div>';
 
     window.sb.from('bookings')
-      .select('*, rooms(name)')
+      .select('*, rooms(name, rate_hourly, rate_daily, rate_weekly)')
       .eq('status', 'solicitado')
       .order('created_at', { ascending: true })
       .then(function (res) {

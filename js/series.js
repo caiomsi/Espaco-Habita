@@ -33,6 +33,40 @@
     return p[2] + '/' + p[1] + '/' + p[0];
   }
 
+  // ---- Discount (R$ / % toggle) — mirrors bookings.js ----------
+
+  function discountMode(pillsId) {
+    var active = document.querySelector('#' + pillsId + ' .discount-mode-pill--active');
+    return active ? active.dataset.mode : 'valor';
+  }
+
+  function setDiscountMode(pillsId, mode) {
+    document.querySelectorAll('#' + pillsId + ' .discount-mode-pill').forEach(function (p) {
+      p.classList.toggle('discount-mode-pill--active', p.dataset.mode === mode);
+    });
+  }
+
+  function computeDiscountReais(rateEl, discEl, pillsId) {
+    var lastApplied = parseFloat(rateEl.dataset.lastDiscount || '0') || 0;
+    var baseRate    = (parseFloat(rateEl.value) || 0) + lastApplied;
+    var raw         = parseFloat(discEl.value) || 0;
+    var reais       = discountMode(pillsId) === 'percentual' ? (baseRate * raw / 100) : raw;
+    return Math.max(0, Math.min(reais, baseRate));
+  }
+
+  function applySrDiscount() {
+    var rateEl = document.getElementById('sr-rate');
+    var discEl = document.getElementById('sr-discount');
+    if (!rateEl || !discEl) return;
+    var lastApplied  = parseFloat(rateEl.dataset.lastDiscount || '0') || 0;
+    var baseRate     = (parseFloat(rateEl.value) || 0) + lastApplied;
+    var discountReais = computeDiscountReais(rateEl, discEl, 'sr-discount-mode');
+    rateEl.value = (baseRate - discountReais).toFixed(2);
+    rateEl.dataset.lastDiscount = discountReais.toFixed(2);
+    discEl.value = discountReais.toFixed(2);
+    setDiscountMode('sr-discount-mode', 'valor');
+  }
+
   // ---- Core: generate + conflict check ----------------------
 
   // Returns [{starts_at, ends_at, date_str}, …] for all matching days in the rule window.
@@ -102,6 +136,7 @@
       start_time:   data.rule.start_time,
       end_time:     data.rule.end_time,
       rate_applied: data.rule.rate_applied,
+      discount_amount: data.rule.discount_amount,
       notes:        data.rule.notes,
       ends_on:      data.rule.ends_on,
     };
@@ -160,6 +195,9 @@
     var startTime = (document.getElementById('sr-start-time') || {}).value || '';
     var endTime   = (document.getElementById('sr-end-time')   || {}).value || '';
     var rate      = parseFloat((document.getElementById('sr-rate')  || {}).value);
+    var rateEl    = document.getElementById('sr-rate');
+    var discEl    = document.getElementById('sr-discount');
+    var discount  = (rateEl && discEl) ? computeDiscountReais(rateEl, discEl, 'sr-discount-mode') : 0;
     var notes     = ((document.getElementById('sr-notes') || {}).value || '').trim();
     var startsOn  = (document.getElementById('sr-starts-on')  || {}).value || '';
     var endsOn    = (document.getElementById('sr-ends-on')    || {}).value || '';
@@ -185,6 +223,7 @@
         start_time:   startTime,
         end_time:     endTime,
         rate_applied: isNaN(rate) ? null : rate,
+        discount_amount: isNaN(discount) ? 0 : discount,
         notes:        notes || null,
         starts_on:    startsOn,
         ends_on:      endsOn || null,
@@ -298,6 +337,10 @@
     var titleEl = document.getElementById('series-modal-title');
     if (titleEl) titleEl.textContent = 'Nova Recorrência';
 
+    var rateEl = document.getElementById('sr-rate');
+    if (rateEl) rateEl.dataset.lastDiscount = '0';
+    setDiscountMode('sr-discount-mode', 'valor');
+
     populateRooms(null);
     window.UI.openModal('series-modal');
   }
@@ -348,6 +391,11 @@
         var notesEl = document.getElementById('sr-notes');
         if (rateEl)  rateEl.value  = s.rate_applied != null ? s.rate_applied : '';
         if (notesEl) notesEl.value = s.notes || '';
+        var discEl = document.getElementById('sr-discount');
+        var discountAmount = s.discount_amount || 0;
+        if (discEl) discEl.value = discountAmount ? discountAmount : '';
+        if (rateEl) rateEl.dataset.lastDiscount = discountAmount || '0';
+        setDiscountMode('sr-discount-mode', 'valor');
 
         // Lock starts_on to the selected occurrence's date
         var startsOnEl = document.getElementById('sr-starts-on');
@@ -540,6 +588,20 @@
     // "Criar recorrência" / "Salvar e recriar" button
     var createBtn = document.getElementById('sr-create-btn');
     if (createBtn) createBtn.addEventListener('click', onCreateSeries);
+
+    // Discount mode pills (R$ / %)
+    document.querySelectorAll('#sr-discount-mode .discount-mode-pill').forEach(function (p) {
+      p.addEventListener('click', function () { setDiscountMode('sr-discount-mode', p.dataset.mode); });
+    });
+
+    // Discount apply link
+    var discApplyBtn = document.getElementById('sr-discount-apply');
+    if (discApplyBtn) {
+      discApplyBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        applySrDiscount();
+      });
+    }
 
     // Reset preview when key form fields change (user changed their mind)
     ['sr-room', 'sr-start-time', 'sr-end-time', 'sr-starts-on', 'sr-ends-on'].forEach(function (id) {

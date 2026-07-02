@@ -125,6 +125,44 @@
     if (hours <= 0) return;
 
     rateEl.value = (hours * parseFloat(room.rate_hourly)).toFixed(2);
+    rateEl.dataset.lastDiscount = '0';
+  }
+
+  // ---- Discount (R$ / % toggle) ---------------------------
+
+  function discountMode(pillsId) {
+    var active = document.querySelector('#' + pillsId + ' .discount-mode-pill--active');
+    return active ? active.dataset.mode : 'valor';
+  }
+
+  function setDiscountMode(pillsId, mode) {
+    document.querySelectorAll('#' + pillsId + ' .discount-mode-pill').forEach(function (p) {
+      p.classList.toggle('discount-mode-pill--active', p.dataset.mode === mode);
+    });
+  }
+
+  // Computes the reais value of the discount from the current mode + input,
+  // using rateEl's value plus any discount already folded into it (dataset.lastDiscount)
+  // as the pre-discount base — so re-computing never compounds.
+  function computeDiscountReais(rateEl, discEl, pillsId) {
+    var lastApplied = parseFloat(rateEl.dataset.lastDiscount || '0') || 0;
+    var baseRate    = (parseFloat(rateEl.value) || 0) + lastApplied;
+    var raw         = parseFloat(discEl.value) || 0;
+    var reais       = discountMode(pillsId) === 'percentual' ? (baseRate * raw / 100) : raw;
+    return Math.max(0, Math.min(reais, baseRate));
+  }
+
+  function applyBkDiscount() {
+    var rateEl = document.getElementById('bk-rate-applied');
+    var discEl = document.getElementById('bk-discount');
+    if (!rateEl || !discEl) return;
+    var lastApplied = parseFloat(rateEl.dataset.lastDiscount || '0') || 0;
+    var baseRate     = (parseFloat(rateEl.value) || 0) + lastApplied;
+    var discountReais = computeDiscountReais(rateEl, discEl, 'bk-discount-mode');
+    rateEl.value = (baseRate - discountReais).toFixed(2);
+    rateEl.dataset.lastDiscount = discountReais.toFixed(2);
+    discEl.value = discountReais.toFixed(2);
+    setDiscountMode('bk-discount-mode', 'valor');
   }
 
   // ---- Open modal: new booking ---------------------------
@@ -183,6 +221,11 @@
     document.getElementById('bk-notes').value       = booking.notes || '';
     var rateEl = document.getElementById('bk-rate-applied');
     if (rateEl) rateEl.value = booking.rate_applied != null ? booking.rate_applied : '';
+    var discEl = document.getElementById('bk-discount');
+    var discountAmount = booking.discount_amount || 0;
+    if (discEl) discEl.value = discountAmount ? discountAmount : '';
+    if (rateEl) rateEl.dataset.lastDiscount = discountAmount || '0';
+    setDiscountMode('bk-discount-mode', 'valor');
 
     window.UI.openModal('booking-modal');
     if (window.BKPicker) window.BKPicker.open(booking.room_id, new Date(booking.starts_at), new Date(booking.ends_at), booking.id);
@@ -197,6 +240,9 @@
     hideSuggestions();
     setError('');
     setWarning('');
+    var rateEl = document.getElementById('bk-rate-applied');
+    if (rateEl) rateEl.dataset.lastDiscount = '0';
+    setDiscountMode('bk-discount-mode', 'valor');
     if (window.BKPicker) window.BKPicker.reset();
   }
 
@@ -378,6 +424,20 @@
       });
     }
 
+    // Discount mode pills (R$ / %)
+    document.querySelectorAll('#bk-discount-mode .discount-mode-pill').forEach(function (p) {
+      p.addEventListener('click', function () { setDiscountMode('bk-discount-mode', p.dataset.mode); });
+    });
+
+    // Discount apply link
+    var discApplyBtn = document.getElementById('bk-discount-apply');
+    if (discApplyBtn) {
+      discApplyBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        applyBkDiscount();
+      });
+    }
+
     var form = document.getElementById('booking-form');
     if (!form) return;
 
@@ -396,6 +456,8 @@
       var phone      = (hintEl && !hintEl.hidden) ? hintEl.textContent.trim() : null;
       var rateEl     = document.getElementById('bk-rate-applied');
       var rateApplied = rateEl && rateEl.value ? parseFloat(rateEl.value) : null;
+      var discEl     = document.getElementById('bk-discount');
+      var discountAmount = (rateEl && discEl) ? computeDiscountReais(rateEl, discEl, 'bk-discount-mode') : 0;
 
       if (!clientName) { setError('O nome do cliente é obrigatório.'); return; }
       if (!clientId)   {
@@ -425,7 +487,8 @@
         ends_at:      endsAt,
         status:       status,
         notes:        notes || null,
-        rate_applied: isNaN(rateApplied) ? null : rateApplied
+        rate_applied: isNaN(rateApplied) ? null : rateApplied,
+        discount_amount: isNaN(discountAmount) ? 0 : discountAmount
       };
 
       // If already confirmed after a soft conflict warning, skip to save

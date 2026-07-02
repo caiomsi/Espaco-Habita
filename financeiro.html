@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Salas — Espaço Habita Admin</title>
+  <title>Financeiro — Espaço Habita Admin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=12">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
-<body data-page="rooms">
+<body data-page="financeiro">
 
   <!-- Mobile top bar -->
   <div class="mobile-topbar">
@@ -51,7 +51,7 @@
           </svg>
           Clientes
         </a>
-        <a href="rooms.html" class="active">
+        <a href="rooms.html">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
             <polyline points="9 22 9 12 15 12 15 22"/>
@@ -72,7 +72,7 @@
           </svg>
           Despesas
         </a>
-        <a href="financeiro.html">
+        <a href="financeiro.html" class="active">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
           </svg>
@@ -94,86 +94,69 @@
 
     <!-- Main content -->
     <main class="main-content">
-      <div class="page-header">
+      <div class="page-header page-header--col">
         <div class="page-header-left">
-          <h1 class="page-title">Salas</h1>
-          <p class="page-sub">Gerencie as salas, capacidade e tarifas</p>
+          <h1 class="page-title">Financeiro</h1>
         </div>
-        <button id="add-room-btn" class="btn btn-primary">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5"  y1="12" x2="19" y2="12"/>
-          </svg>
-          Adicionar Sala
-        </button>
+        <div class="cal-toolbar">
+          <button id="prev-month" class="btn btn-ghost btn-sm" aria-label="Mês anterior">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+          <span id="period-label" class="week-label"></span>
+          <button id="next-month" class="btn btn-ghost btn-sm" aria-label="Próximo mês">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+          <button id="this-month-btn" class="btn btn-ghost btn-sm">Este mês</button>
+        </div>
       </div>
+
       <div class="page-body">
-        <div id="rooms-list" class="rooms-grid">
-          <div class="loading-state">Carregando…</div>
+        <div class="fin-stat-grid">
+          <div class="fin-stat-card">
+            <p class="fin-stat-label">Receita</p>
+            <p class="fin-stat-value" id="fin-receita">—</p>
+          </div>
+          <div class="fin-stat-card">
+            <p class="fin-stat-label">Descontos concedidos</p>
+            <p class="fin-stat-value" id="fin-descontos">—</p>
+          </div>
+          <div class="fin-stat-card">
+            <p class="fin-stat-label">Despesas</p>
+            <p class="fin-stat-value" id="fin-despesas">—</p>
+          </div>
+          <div class="fin-stat-card" id="fin-saldo-card">
+            <p class="fin-stat-label">Saldo</p>
+            <p class="fin-stat-value" id="fin-saldo">—</p>
+          </div>
+        </div>
+
+        <div class="fin-breakdown-grid">
+          <div class="fin-breakdown-col">
+            <h2 class="fin-breakdown-title">Despesas por categoria</h2>
+            <div id="fin-expense-breakdown">
+              <div class="loading-state">Carregando…</div>
+            </div>
+          </div>
+          <div class="fin-breakdown-col">
+            <h2 class="fin-breakdown-title">Receita por sala</h2>
+            <div id="fin-room-breakdown">
+              <div class="loading-state">Carregando…</div>
+            </div>
+          </div>
         </div>
       </div>
     </main>
 
   </div><!-- .app-layout -->
 
-  <!-- Room modal -->
-  <div id="room-modal" class="modal-overlay" hidden
-       role="dialog" aria-modal="true" aria-labelledby="room-modal-title">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h2 id="room-modal-title">Nova Sala</h2>
-        <button class="modal-close" aria-label="Fechar">&times;</button>
-      </div>
-      <form id="room-form" novalidate>
-        <div class="form-field">
-          <label for="rm-name">Nome da sala *</label>
-          <input type="text" id="rm-name" name="name" required
-                 placeholder="Ex: Sala de Pilates">
-        </div>
-        <div class="form-field">
-          <label for="rm-description">Descrição</label>
-          <textarea id="rm-description" name="description" rows="2"
-                    placeholder="Descrição breve da sala…"></textarea>
-        </div>
-        <div class="form-field">
-          <label for="rm-capacity">Capacidade (pessoas)</label>
-          <input type="number" id="rm-capacity" name="capacity" min="1" placeholder="Ex: 10">
-        </div>
-        <div class="form-row">
-          <div class="form-field">
-            <label for="rm-rate-hourly">Tarifa por hora (R$)</label>
-            <input type="number" id="rm-rate-hourly" name="rate_hourly"
-                   min="0" step="0.01" placeholder="0,00">
-          </div>
-          <div class="form-field">
-            <label for="rm-rate-daily">Tarifa por dia (R$)</label>
-            <input type="number" id="rm-rate-daily" name="rate_daily"
-                   min="0" step="0.01" placeholder="0,00">
-          </div>
-          <div class="form-field">
-            <label for="rm-rate-weekly">Tarifa semanal (R$)</label>
-            <input type="number" id="rm-rate-weekly" name="rate_weekly"
-                   min="0" step="0.01" placeholder="0,00">
-          </div>
-        </div>
-        <div class="form-field">
-          <label for="rm-photo-url">URL da foto</label>
-          <input type="url" id="rm-photo-url" name="photo_url"
-                 placeholder="https://…">
-        </div>
-        <p id="room-error" class="form-error" hidden></p>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-ghost modal-close">Cancelar</button>
-          <button type="submit" id="room-save-btn" class="btn btn-primary">Salvar</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/supabase.js?v=7"></script>
   <script src="js/auth.js?v=7"></script>
   <script src="js/ui.js?v=8"></script>
-  <script src="js/rooms.js?v=9"></script>
+  <script src="js/financeiro.js?v=1"></script>
 </body>
 </html>

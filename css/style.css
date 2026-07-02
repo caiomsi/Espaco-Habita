@@ -2349,3 +2349,257 @@ h1, h2, h3, h4 { line-height: 1.3; font-weight: 600; }
   .req-card-body { padding: .5rem 1.25rem 0; }
   .req-card-actions { padding: .75rem 1.25rem 1rem; }
 }
+
+/* ============================================================
+   DISCOUNT UI (booking modal, series modal, request approval)
+   ============================================================ */
+
+.discount-row {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.discount-row input { flex: 1; min-width: 100px; }
+
+.discount-mode-pills { display: flex; gap: .3rem; flex-shrink: 0; }
+.discount-mode-pill {
+  padding: .35rem .7rem; border-radius: 9999px;
+  border: 1.5px solid var(--border-strong);
+  background: transparent; color: var(--warm-700);
+  font-family: var(--font-body); font-size: .78rem; font-weight: 600;
+  cursor: pointer; transition: background .15s, border-color .15s, color .15s;
+}
+.discount-mode-pill:hover { background: var(--warm-100); }
+.discount-mode-pill--active {
+  background: var(--primary); border-color: var(--primary); color: #fff;
+}
+
+/* ---- Request approval pricing row ---- */
+.req-pricing-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-bottom: .75rem;
+  padding: .75rem .9rem;
+  background: var(--warm-50);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.req-pricing-row .form-field { margin-bottom: 0; min-width: 140px; flex: 1; }
+.req-price-final {
+  flex-basis: 100%;
+  font-size: .82rem; font-weight: 600;
+  color: var(--primary);
+  margin: 0;
+}
+
+/* ============================================================
+   BAR-LIST BREAKDOWN (expenses.html + financeiro.html)
+   ============================================================ */
+
+.bar-list-row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .45rem 0;
+}
+
+.bar-list-label {
+  width: 120px;
+  flex-shrink: 0;
+  font-size: var(--font-size-sm);
+  color: var(--warm-700);
+  font-weight: 500;
+}
+
+.bar-list-track {
+  flex: 1;
+  height: 10px;
+  background: var(--warm-100);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.bar-list-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--terra-400), var(--primary));
+  border-radius: 9999px;
+  transition: width .3s ease;
+}
+
+.bar-list-amount {
+  width: 100px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--warm-800);
+}
+
+.bar-list-empty {
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* ============================================================
+   EXPENSES PAGE
+   ============================================================ */
+
+.expense-cat-breakdown {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.4rem;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5rem;
+}
+
+.expense-cat-breakdown-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--warm-800);
+  margin: 0 0 .75rem;
+}
+
+.expenses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 1.1rem;
+  align-items: start;
+}
+
+.expense-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.4rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+  transition: box-shadow .2s, transform .2s;
+  animation: fade-up .35s ease both;
+}
+
+.expense-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.expense-card--inactive {
+  opacity: .52;
+  border-style: dashed;
+}
+
+.expense-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .5rem;
+}
+
+.expense-card-category {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--primary);
+  letter-spacing: .01em;
+}
+
+.expense-card-amount {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--warm-800);
+  margin-top: .15rem;
+}
+
+.expense-card-date {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.expense-card-desc {
+  font-size: var(--font-size-sm);
+  color: var(--warm-600);
+  line-height: 1.5;
+}
+
+.expense-card-actions {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  padding-top: .4rem;
+  border-top: 1px solid var(--border);
+}
+
+/* ============================================================
+   FINANCEIRO PAGE
+   ============================================================ */
+
+.fin-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.fin-stat-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.4rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.fin-stat-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  margin-bottom: .4rem;
+}
+
+.fin-stat-value {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: var(--warm-800);
+}
+
+.fin-stat-card--negative .fin-stat-value { color: var(--danger); }
+
+.fin-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.fin-breakdown-col {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.4rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.fin-breakdown-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--warm-800);
+  margin: 0 0 .75rem;
+}
+
+@media (max-width: 640px) {
+  .bar-list-label { width: 90px; font-size: var(--font-size-xs); }
+  .bar-list-amount { width: 80px; font-size: var(--font-size-xs); }
+  .req-pricing-row .form-field { min-width: 100%; }
+}

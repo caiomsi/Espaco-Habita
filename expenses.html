@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Salas — Espaço Habita Admin</title>
+  <title>Despesas — Espaço Habita Admin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=12">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
-<body data-page="rooms">
+<body data-page="expenses">
 
   <!-- Mobile top bar -->
   <div class="mobile-topbar">
@@ -51,7 +51,7 @@
           </svg>
           Clientes
         </a>
-        <a href="rooms.html" class="active">
+        <a href="rooms.html">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
             <polyline points="9 22 9 12 15 12 15 22"/>
@@ -65,7 +65,7 @@
           </svg>
           Solicitações
         </a>
-        <a href="expenses.html">
+        <a href="expenses.html" class="active">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="1" x2="12" y2="23"/>
             <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
@@ -96,19 +96,25 @@
     <main class="main-content">
       <div class="page-header">
         <div class="page-header-left">
-          <h1 class="page-title">Salas</h1>
-          <p class="page-sub">Gerencie as salas, capacidade e tarifas</p>
+          <h1 class="page-title">Despesas</h1>
+          <p class="page-sub">Registre e acompanhe os gastos do espaço</p>
         </div>
-        <button id="add-room-btn" class="btn btn-primary">
+        <button id="add-expense-btn" class="btn btn-primary">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <line x1="12" y1="5" x2="12" y2="19"/>
             <line x1="5"  y1="12" x2="19" y2="12"/>
           </svg>
-          Adicionar Sala
+          Adicionar Despesa
         </button>
       </div>
       <div class="page-body">
-        <div id="rooms-list" class="rooms-grid">
+        <div class="expense-cat-breakdown">
+          <h2 class="expense-cat-breakdown-title">Despesas por categoria (total)</h2>
+          <div id="expense-cat-breakdown-list">
+            <div class="loading-state">Carregando…</div>
+          </div>
+        </div>
+        <div id="expenses-list" class="expenses-grid">
           <div class="loading-state">Carregando…</div>
         </div>
       </div>
@@ -116,55 +122,47 @@
 
   </div><!-- .app-layout -->
 
-  <!-- Room modal -->
-  <div id="room-modal" class="modal-overlay" hidden
-       role="dialog" aria-modal="true" aria-labelledby="room-modal-title">
+  <!-- Expense modal (add / edit) -->
+  <div id="expense-modal" class="modal-overlay" hidden
+       role="dialog" aria-modal="true" aria-labelledby="expense-modal-title">
     <div class="modal-box">
       <div class="modal-header">
-        <h2 id="room-modal-title">Nova Sala</h2>
+        <h2 id="expense-modal-title">Nova Despesa</h2>
         <button class="modal-close" aria-label="Fechar">&times;</button>
       </div>
-      <form id="room-form" novalidate>
+      <form id="expense-form" novalidate>
         <div class="form-field">
-          <label for="rm-name">Nome da sala *</label>
-          <input type="text" id="rm-name" name="name" required
-                 placeholder="Ex: Sala de Pilates">
-        </div>
-        <div class="form-field">
-          <label for="rm-description">Descrição</label>
-          <textarea id="rm-description" name="description" rows="2"
-                    placeholder="Descrição breve da sala…"></textarea>
-        </div>
-        <div class="form-field">
-          <label for="rm-capacity">Capacidade (pessoas)</label>
-          <input type="number" id="rm-capacity" name="capacity" min="1" placeholder="Ex: 10">
+          <label for="ex-category">Categoria *</label>
+          <select id="ex-category" name="category" required>
+            <option value="aluguel">Aluguel</option>
+            <option value="contas">Contas (água/luz/internet)</option>
+            <option value="manutencao">Manutenção</option>
+            <option value="material">Material</option>
+            <option value="marketing">Marketing</option>
+            <option value="pessoal">Pessoal</option>
+            <option value="outros">Outros</option>
+          </select>
         </div>
         <div class="form-row">
           <div class="form-field">
-            <label for="rm-rate-hourly">Tarifa por hora (R$)</label>
-            <input type="number" id="rm-rate-hourly" name="rate_hourly"
-                   min="0" step="0.01" placeholder="0,00">
+            <label for="ex-amount">Valor (R$) *</label>
+            <input type="number" id="ex-amount" name="amount" required
+                   min="0.01" step="0.01" placeholder="0,00">
           </div>
           <div class="form-field">
-            <label for="rm-rate-daily">Tarifa por dia (R$)</label>
-            <input type="number" id="rm-rate-daily" name="rate_daily"
-                   min="0" step="0.01" placeholder="0,00">
-          </div>
-          <div class="form-field">
-            <label for="rm-rate-weekly">Tarifa semanal (R$)</label>
-            <input type="number" id="rm-rate-weekly" name="rate_weekly"
-                   min="0" step="0.01" placeholder="0,00">
+            <label for="ex-date">Data *</label>
+            <input type="date" id="ex-date" name="expense_date" required>
           </div>
         </div>
         <div class="form-field">
-          <label for="rm-photo-url">URL da foto</label>
-          <input type="url" id="rm-photo-url" name="photo_url"
-                 placeholder="https://…">
+          <label for="ex-description">Descrição</label>
+          <textarea id="ex-description" name="description" rows="2"
+                    placeholder="Ex: Conta de luz de junho, material de limpeza…"></textarea>
         </div>
-        <p id="room-error" class="form-error" hidden></p>
+        <p id="expense-error" class="form-error" hidden></p>
         <div class="modal-actions">
           <button type="button" class="btn btn-ghost modal-close">Cancelar</button>
-          <button type="submit" id="room-save-btn" class="btn btn-primary">Salvar</button>
+          <button type="submit" id="expense-save-btn" class="btn btn-primary">Salvar</button>
         </div>
       </form>
     </div>
@@ -174,6 +172,6 @@
   <script src="js/supabase.js?v=7"></script>
   <script src="js/auth.js?v=7"></script>
   <script src="js/ui.js?v=8"></script>
-  <script src="js/rooms.js?v=9"></script>
+  <script src="js/expenses.js?v=1"></script>
 </body>
 </html>

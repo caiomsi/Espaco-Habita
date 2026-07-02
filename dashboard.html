@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=11">
+  <link rel="stylesheet" href="css/style.css?v=12">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
 <body data-page="dashboard">
@@ -64,6 +64,19 @@
             <polyline points="22 4 12 14.01 9 11.01"/>
           </svg>
           Solicitações
+        </a>
+        <a href="expenses.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+          Despesas
+        </a>
+        <a href="financeiro.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          Financeiro
         </a>
       </div>
       <div class="sidebar-footer">
@@ -223,6 +236,17 @@
                  min="0" step="0.01" placeholder="0,00">
         </div>
         <div class="form-field">
+          <label>Desconto</label>
+          <div class="discount-row">
+            <div class="discount-mode-pills" id="bk-discount-mode">
+              <button type="button" class="discount-mode-pill discount-mode-pill--active" data-mode="valor">R$</button>
+              <button type="button" class="discount-mode-pill" data-mode="percentual">%</button>
+            </div>
+            <input type="number" id="bk-discount" min="0" step="0.01" placeholder="0,00">
+            <a href="#" id="bk-discount-apply" class="rate-suggest-link">Aplicar</a>
+          </div>
+        </div>
+        <div class="form-field">
           <label for="bk-notes">Observações</label>
           <textarea id="bk-notes" name="notes" rows="3"
                     placeholder="Notas internas, equipamentos, etc."></textarea>
@@ -326,6 +350,18 @@
         </div>
 
         <div class="form-field">
+          <label>Desconto</label>
+          <div class="discount-row">
+            <div class="discount-mode-pills" id="sr-discount-mode">
+              <button type="button" class="discount-mode-pill discount-mode-pill--active" data-mode="valor">R$</button>
+              <button type="button" class="discount-mode-pill" data-mode="percentual">%</button>
+            </div>
+            <input type="number" id="sr-discount" min="0" step="0.01" placeholder="0,00">
+            <a href="#" id="sr-discount-apply" class="rate-suggest-link">Aplicar</a>
+          </div>
+        </div>
+
+        <div class="form-field">
           <label for="sr-notes">Observações</label>
           <textarea id="sr-notes" rows="2" placeholder="Notas internas…"></textarea>
         </div>
@@ -402,12 +438,12 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/supabase.js?v=7"></script>
   <script src="js/auth.js?v=7"></script>
-  <script src="js/ui.js?v=7"></script>
+  <script src="js/ui.js?v=8"></script>
   <script src="js/overlap.js?v=10"></script>
-  <script src="js/bookings.js?v=8"></script>
+  <script src="js/bookings.js?v=9"></script>
   <script src="js/bk-picker.js?v=7"></script>
   <script src="js/calendar.js?v=9"></script>
   <script src="js/blocked.js?v=7"></script>
-  <script src="js/series.js?v=2"></script>
+  <script src="js/series.js?v=3"></script>
 </body>
 </html>
