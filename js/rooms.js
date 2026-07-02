@@ -3,6 +3,13 @@
 
   var currentRoom = null; // null = new; object = editing
 
+  var PRICING_GROUP_LABELS = {
+    salao:   'Salão de Eventos',
+    grande:  'Sala Grande',
+    pequena: 'Sala Pequena',
+    sala1:   'Sala 1'
+  };
+
   // ---- Load & render rooms list --------------------------
 
   function loadRooms() {
@@ -60,6 +67,9 @@
           '<div class="room-card-badges">' +
             (room.capacity
               ? '<span class="badge">' + room.capacity + ' pessoas</span>'
+              : '') +
+            (room.pricing_group
+              ? '<span class="badge">' + PRICING_GROUP_LABELS[room.pricing_group] + '</span>'
               : '') +
             '<span class="badge ' + (room.active ? 'badge--active' : 'badge--inactive') + '">' +
               (room.active ? 'Ativa' : 'Inativa') + '</span>' +
@@ -119,6 +129,7 @@
     document.getElementById('rm-rate-daily').value   = room.rate_daily  || '';
     document.getElementById('rm-rate-weekly').value  = room.rate_weekly || '';
     document.getElementById('rm-photo-url').value    = room.photo_url   || '';
+    document.getElementById('rm-pricing-group').value = room.pricing_group || '';
     window.UI.openModal('room-modal');
   }
 
@@ -189,7 +200,8 @@
         rate_hourly: isNaN(rateHourly) ? null : rateHourly,
         rate_daily:  isNaN(rateDaily)  ? null : rateDaily,
         rate_weekly: isNaN(rateWeekly) ? null : rateWeekly,
-        photo_url:   photoUrl          || null
+        photo_url:   photoUrl          || null,
+        pricing_group: document.getElementById('rm-pricing-group').value || null
       };
 
       window.UI.setLoading(saveBtn, true);

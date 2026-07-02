@@ -42,6 +42,16 @@
   }
 
   // ---- Load & render --------------------------------------------
+  //
+  // Revenue is recognized once, from three independent sources — no double
+  // counting between them (see contract/package RPCs, which zero out
+  // rate_applied and tag revenue_source on the bookings they generate):
+  //   - Ad-hoc bookings: status='confirmado' AND revenue_source='direto', on approval
+  //   - Hour packages: at purchase (client_hour_packages.purchased_at in month)
+  //   - Sala contracts: live per displayed month, from price_monthly, for every
+  //     contract whose [starts_on, ends_on] window overlaps the month and wasn't
+  //     cancelled before it started. The one-time admin fee is recognized in the
+  //     month the contract started, when admin_fee_charged is true.
 
   function load() {
     var labelEl = document.getElementById('period-label');
@@ -53,36 +63,58 @@
       window.sb.from('bookings')
         .select('rate_applied, discount_amount, rooms(name)')
         .eq('status', 'confirmado')
+        .eq('revenue_source', 'direto')
         .gte('starts_at', range.start + 'T00:00:00-03:00')
         .lt('starts_at', range.end + 'T00:00:00-03:00'),
+      window.sb.from('client_hour_packages')
+        .select('price_paid, purchased_at')
+        .gte('purchased_at', range.start + 'T00:00:00-03:00')
+        .lt('purchased_at', range.end + 'T00:00:00-03:00'),
+      window.sb.from('sala_contracts')
+        .select('price_monthly, starts_on, ends_on, admin_fee_charged, admin_fee_amount, status')
+        .lt('starts_on', range.end)
+        .or('ends_on.is.null,ends_on.gte.' + range.start),
       window.sb.from('expenses')
         .select('category, amount')
         .eq('active', true)
         .gte('expense_date', range.start)
         .lt('expense_date', range.end)
     ]).then(function (results) {
-      var bookingsRes = results[0];
-      var expensesRes = results[1];
-      if (bookingsRes.error || expensesRes.error) {
+      var bookingsRes  = results[0];
+      var packagesRes  = results[1];
+      var contractsRes = results[2];
+      var expensesRes  = results[3];
+      if (bookingsRes.error || packagesRes.error || contractsRes.error || expensesRes.error) {
         window.UI.toast('Erro ao carregar dados financeiros.', 'erro');
         return;
       }
-      render(bookingsRes.data || [], expensesRes.data || []);
+      render(bookingsRes.data || [], packagesRes.data || [], contractsRes.data || [], expensesRes.data || [], range);
     });
   }
 
-  function render(bookings, expenses) {
-    var receita = 0, descontos = 0, despesas = 0;
+  function render(bookings, packages, contracts, expenses, range) {
+    var receitaDireto = 0, receitaPacotes = 0, receitaContratos = 0, descontos = 0, despesas = 0;
     var byRoom = {};
     var byCategory = {};
 
     bookings.forEach(function (b) {
       var rate = parseFloat(b.rate_applied) || 0;
       var disc = parseFloat(b.discount_amount) || 0;
-      receita   += rate;
-      descontos += disc;
+      receitaDireto += rate;
+      descontos     += disc;
       var roomName = (b.rooms && b.rooms.name) ? b.rooms.name : 'Sala';
       byRoom[roomName] = (byRoom[roomName] || 0) + rate;
+    });
+
+    packages.forEach(function (p) {
+      receitaPacotes += parseFloat(p.price_paid) || 0;
+    });
+
+    contracts.forEach(function (c) {
+      receitaContratos += parseFloat(c.price_monthly) || 0;
+      if (c.admin_fee_charged && c.starts_on >= range.start && c.starts_on < range.end) {
+        receitaContratos += parseFloat(c.admin_fee_amount) || 0;
+      }
     });
 
     expenses.forEach(function (e) {
@@ -91,7 +123,8 @@
       byCategory[e.category] = (byCategory[e.category] || 0) + amount;
     });
 
-    var saldo = receita - despesas;
+    var receita = receitaDireto + receitaPacotes + receitaContratos;
+    var saldo   = receita - despesas;
 
     setText('fin-receita',   window.UI.formatCurrency(receita));
     setText('fin-descontos', window.UI.formatCurrency(descontos));
@@ -110,6 +143,13 @@
       return { label: name, amount: byRoom[name] };
     });
     window.UI.renderBarList(document.getElementById('fin-room-breakdown'), roomRows);
+
+    var originRows = [
+      { label: 'Ad-hoc', amount: receitaDireto },
+      { label: 'Pacotes', amount: receitaPacotes },
+      { label: 'Contratos', amount: receitaContratos }
+    ].filter(function (r) { return r.amount > 0; });
+    window.UI.renderBarList(document.getElementById('fin-origin-breakdown'), originRows);
   }
 
   function setText(id, text) {

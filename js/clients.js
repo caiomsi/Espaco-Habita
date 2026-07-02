@@ -1,10 +1,13 @@
 (function () {
   'use strict';
 
-  var currentClient = null; // null = new; object = editing
-  var plansClient   = null; // client whose plans modal is open
+  var currentClient  = null; // null = new; object = editing
+  var plansClient    = null; // client whose plans modal is open
+  var packagesClient = null; // client whose packages modal is open
 
   var DAY_NAMES = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+  var GROUP_LABELS = { grande: 'Sala Grande', pequena: 'Sala Pequena', sala1: 'Sala 1' };
+  var PACKAGE_LABELS = { avulsa: 'Avulsa (1h)', pacote5: 'Pacote 5h', pacote10: 'Pacote 10h', pacote15: 'Pacote 15h' };
 
   // ---- Load & render clients --------------------------------
 
@@ -86,6 +89,7 @@
         '<div class="client-card-actions">' +
           '<button class="btn btn-ghost btn-sm" data-action="edit">Editar</button>' +
           '<button class="btn btn-ghost btn-sm" data-action="plans">Planos</button>' +
+          '<button class="btn btn-ghost btn-sm" data-action="packages">Pacotes</button>' +
           '<button class="btn btn-ghost btn-sm" data-action="toggle">' +
             (client.active ? 'Desativar' : 'Reativar') + '</button>' +
         '</div>';
@@ -96,6 +100,10 @@
 
       card.querySelector('[data-action="plans"]').addEventListener('click', function () {
         openPlans(client);
+      });
+
+      card.querySelector('[data-action="packages"]').addEventListener('click', function () {
+        openPackages(client);
       });
 
       card.querySelector('[data-action="toggle"]').addEventListener('click', function () {
@@ -287,6 +295,190 @@
       });
   }
 
+  // ---- Packages modal ---------------------------------------
+
+  function openPackages(client) {
+    packagesClient = client;
+    document.getElementById('packages-modal-title').textContent = 'Pacotes de Horas — ' + client.name;
+    document.getElementById('package-error').hidden = true;
+
+    document.getElementById('pk-room-group').value = '';
+    var typeSel = document.getElementById('pk-type');
+    typeSel.innerHTML = '<option value="">— Selecione um grupo primeiro —</option>';
+    typeSel.disabled = true;
+    document.getElementById('pk-price').value = '';
+    document.getElementById('pk-price-presets').innerHTML = '';
+
+    loadPackagesList(client.id);
+    window.UI.openModal('packages-modal');
+  }
+
+  function packageStatusLabel(pkg) {
+    if (!pkg.active) return { text: 'Cancelado', cls: 'badge--inactive' };
+    if (new Date(pkg.expires_at) < new Date()) return { text: 'Expirado', cls: 'badge--inactive' };
+    if (parseFloat(pkg.hours_remaining) <= 0) return { text: 'Esgotado', cls: 'badge--inactive' };
+    return { text: 'Ativo', cls: 'badge--active' };
+  }
+
+  function loadPackagesList(clientId) {
+    var list = document.getElementById('packages-list');
+    if (list) list.innerHTML = '<div class="loading-state" style="padding:.75rem">Carregando…</div>';
+
+    window.sb.from('client_hour_packages').select('*')
+      .eq('client_id', clientId)
+      .order('purchased_at', { ascending: false })
+      .then(function (res) {
+        if (res.error) {
+          if (list) list.innerHTML = '<p class="form-error">Erro ao carregar pacotes.</p>';
+          return;
+        }
+        renderPackagesList(res.data || []);
+      });
+  }
+
+  function renderPackagesList(packages) {
+    var list = document.getElementById('packages-list');
+    if (!list) return;
+
+    if (packages.length === 0) {
+      list.innerHTML = '<p style="font-size:.875rem;color:var(--text-muted);text-align:center;padding:.5rem 0">Nenhum pacote comprado ainda.</p>';
+      return;
+    }
+
+    list.innerHTML = '';
+    packages.forEach(function (p) {
+      var status = packageStatusLabel(p);
+      var expDate = p.expires_at.slice(0, 10).split('-').reverse().join('/');
+      var row = document.createElement('div');
+      row.className = 'plan-row';
+      row.innerHTML =
+        '<span class="plan-row-day">' + (GROUP_LABELS[p.room_group] || p.room_group) + '</span>' +
+        '<span class="plan-row-info">' +
+          p.hours_remaining + 'h / ' + p.hours_purchased + 'h · ' + window.UI.formatCurrency(p.price_paid) +
+          ' · expira ' + expDate +
+          ' <span class="badge ' + status.cls + '">' + status.text + '</span>' +
+        '</span>' +
+        (p.active ? '<button class="plan-row-delete" title="Cancelar pacote" data-pkg-id="' + p.id + '">&times;</button>' : '');
+
+      if (p.active) {
+        row.querySelector('.plan-row-delete').addEventListener('click', function () {
+          cancelPackage(p.id);
+        });
+      }
+
+      list.appendChild(row);
+    });
+  }
+
+  function cancelPackage(packageId) {
+    if (!confirm('Cancelar este pacote? O saldo restante deixará de poder ser usado.')) return;
+    window.sb.from('client_hour_packages').update({ active: false }).eq('id', packageId)
+      .then(function (res) {
+        if (res.error) { window.UI.toast('Erro ao cancelar pacote.', 'erro'); return; }
+        window.UI.toast('Pacote cancelado.', 'ok');
+        if (packagesClient) loadPackagesList(packagesClient.id);
+      });
+  }
+
+  function onPackageGroupChange() {
+    var group = document.getElementById('pk-room-group').value;
+    var typeSel = document.getElementById('pk-type');
+    document.getElementById('pk-price').value = '';
+    document.getElementById('pk-price-presets').innerHTML = '';
+
+    if (!group || !window.Pricing) {
+      typeSel.innerHTML = '<option value="">— Selecione um grupo primeiro —</option>';
+      typeSel.disabled = true;
+      return;
+    }
+
+    typeSel.innerHTML = '<option value="">Carregando…</option>';
+    typeSel.disabled = true;
+
+    window.Pricing.getPackageTiers(group).then(function (tiers) {
+      typeSel.innerHTML = '<option value="">— Selecione —</option>';
+      tiers.forEach(function (t) {
+        var opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = (PACKAGE_LABELS[t.package_type] || t.package_type) +
+          ' — ' + window.UI.formatCurrency(t.price_public);
+        opt.dataset.hours = t.hours;
+        opt.dataset.pricePublic = t.price_public;
+        opt.dataset.priceProfessional = t.price_professional;
+        opt.dataset.validityDays = t.validity_days;
+        typeSel.appendChild(opt);
+      });
+      typeSel.disabled = false;
+    });
+  }
+
+  function onPackageTypeChange() {
+    var typeSel = document.getElementById('pk-type');
+    var presetsEl = document.getElementById('pk-price-presets');
+    presetsEl.innerHTML = '';
+    var opt = typeSel.selectedOptions[0];
+    if (!opt || !opt.value) return;
+
+    var pub  = parseFloat(opt.dataset.pricePublic);
+    var prof = parseFloat(opt.dataset.priceProfessional);
+    presetsEl.innerHTML =
+      '<button type="button" class="rate-preset-chip" data-value="' + pub + '">Público: ' + window.UI.formatCurrency(pub) + '</button>' +
+      '<button type="button" class="rate-preset-chip" data-value="' + prof + '">Profissional: ' + window.UI.formatCurrency(prof) + '</button>';
+    presetsEl.querySelectorAll('.rate-preset-chip').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.getElementById('pk-price').value = parseFloat(btn.dataset.value).toFixed(2);
+        presetsEl.querySelectorAll('.rate-preset-chip').forEach(function (b) {
+          b.classList.toggle('rate-preset-chip--active', b === btn);
+        });
+      });
+    });
+  }
+
+  function addPackagePurchase() {
+    if (!packagesClient) return;
+    var errEl = document.getElementById('package-error');
+    errEl.hidden = true;
+
+    var group = document.getElementById('pk-room-group').value;
+    var typeSel = document.getElementById('pk-type');
+    var opt = typeSel.selectedOptions[0];
+    var price = parseFloat(document.getElementById('pk-price').value);
+
+    if (!group)              { errEl.textContent = 'Selecione um grupo de sala.'; errEl.hidden = false; return; }
+    if (!opt || !opt.value)  { errEl.textContent = 'Selecione o tipo de pacote.'; errEl.hidden = false; return; }
+    if (isNaN(price) || price <= 0) { errEl.textContent = 'Informe um valor pago válido.'; errEl.hidden = false; return; }
+
+    var saveBtn = document.getElementById('package-save-btn');
+    window.UI.setLoading(saveBtn, true);
+
+    var hours = parseFloat(opt.dataset.hours);
+    var validityDays = parseInt(opt.dataset.validityDays, 10) || 60;
+    var purchasedAt = new Date();
+    var expiresAt = new Date(purchasedAt.getTime() + validityDays * 86400000);
+
+    window.sb.from('client_hour_packages').insert({
+      client_id:       packagesClient.id,
+      room_group:      group,
+      hours_purchased: hours,
+      hours_remaining: hours,
+      price_paid:      price,
+      purchased_at:    purchasedAt.toISOString(),
+      expires_at:      expiresAt.toISOString()
+    }).then(function (res) {
+      window.UI.setLoading(saveBtn, false);
+      if (res.error) {
+        errEl.textContent = 'Erro ao salvar: ' + res.error.message;
+        errEl.hidden = false;
+        return;
+      }
+      window.UI.toast('Pacote registrado.', 'ok');
+      document.getElementById('pk-room-group').value = '';
+      onPackageGroupChange();
+      document.getElementById('pk-price').value = '';
+      loadPackagesList(packagesClient.id);
+    });
+  }
+
   // ---- Helpers ---------------------------------------------
 
   function escHtml(str) {
@@ -380,6 +572,14 @@
     // Plan save button
     var planSaveBtn = document.getElementById('plan-save-btn');
     if (planSaveBtn) planSaveBtn.addEventListener('click', addPlan);
+
+    // Package group/type selects + save button
+    var pkGroupSel = document.getElementById('pk-room-group');
+    if (pkGroupSel) pkGroupSel.addEventListener('change', onPackageGroupChange);
+    var pkTypeSel = document.getElementById('pk-type');
+    if (pkTypeSel) pkTypeSel.addEventListener('change', onPackageTypeChange);
+    var packageSaveBtn = document.getElementById('package-save-btn');
+    if (packageSaveBtn) packageSaveBtn.addEventListener('click', addPackagePurchase);
   });
 
 })();

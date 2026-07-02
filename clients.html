@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=12">
+  <link rel="stylesheet" href="css/style.css?v=13">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
 <body data-page="clients">
@@ -57,6 +57,22 @@
             <polyline points="9 22 9 12 15 12 15 22"/>
           </svg>
           Salas
+        </a>
+        <a href="tarifario.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+          Tarifário
+        </a>
+        <a href="contratos.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          Contratos
         </a>
         <a href="requests.html">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -205,10 +221,56 @@
     </div>
   </div>
 
+  <!-- Packages modal -->
+  <div id="packages-modal" class="modal-overlay" hidden
+       role="dialog" aria-modal="true" aria-labelledby="packages-modal-title">
+    <div class="modal-box" style="max-width:560px">
+      <div class="modal-header">
+        <h2 id="packages-modal-title">Pacotes de Horas</h2>
+        <button class="modal-close" aria-label="Fechar">&times;</button>
+      </div>
+
+      <div id="packages-list" class="plans-list">
+        <div class="loading-state" style="padding:1rem">Carregando…</div>
+      </div>
+
+      <!-- Add package form -->
+      <div class="plan-add-form">
+        <p style="font-weight:600;font-size:.875rem">Comprar Pacote</p>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="pk-room-group">Grupo de sala *</label>
+            <select id="pk-room-group">
+              <option value="">— Selecione —</option>
+              <option value="grande">Sala Grande</option>
+              <option value="pequena">Sala Pequena</option>
+              <option value="sala1">Sala 1</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="pk-type">Tipo *</label>
+            <select id="pk-type" disabled><option value="">— Selecione um grupo primeiro —</option></select>
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="pk-price">Valor pago (R$) *</label>
+          <input type="number" id="pk-price" min="0" step="0.01" placeholder="0,00">
+          <div id="pk-price-presets" class="rate-preset-chips"></div>
+        </div>
+        <p id="package-error" class="form-error" hidden></p>
+        <div class="modal-actions" style="margin-top:.75rem;padding-top:.75rem">
+          <button type="button" class="btn btn-ghost modal-close">Fechar</button>
+          <button type="button" id="package-save-btn" class="btn btn-primary">Registrar Compra</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/supabase.js?v=7"></script>
   <script src="js/auth.js?v=7"></script>
   <script src="js/ui.js?v=8"></script>
-  <script src="js/clients.js?v=7"></script>
+  <script src="js/pricing.js?v=1"></script>
+  <script src="js/clients.js?v=8"></script>
 </body>
 </html>

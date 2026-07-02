@@ -1,9 +1,10 @@
 (function () {
   'use strict';
 
-  var currentBooking = null; // null = new booking; object = editing existing
-  var pendingForce   = false;
-  var acDebounce     = null; // autocomplete debounce timer
+  var currentBooking   = null; // null = new booking; object = editing existing
+  var pendingForce     = false;
+  var pendingPackageId = null; // set when the admin picked "pay with package" for a NEW booking
+  var acDebounce       = null; // autocomplete debounce timer
 
   // Cache of rooms loaded for the current modal open (for rate suggestion)
   var _rooms = [];
@@ -49,6 +50,7 @@
       hintEl.hidden = false;
     }
     hideSuggestions();
+    refreshPackageField();
   }
 
   function hideSuggestions() {
@@ -109,6 +111,62 @@
 
   // ---- Rate suggestion ------------------------------------
 
+  function clearRatePresets() {
+    var el = document.getElementById('bk-rate-presets');
+    if (el) el.innerHTML = '';
+  }
+
+  // Renders Público/Profissional preset chips for rooms with a pricing_group,
+  // sourced from the rate-card tables (js/pricing.js) instead of the flat
+  // hours × rate_hourly formula. Clicking a chip fills the rate field.
+  function renderRatePresets(room, hours) {
+    var container = document.getElementById('bk-rate-presets');
+    if (!container || !window.Pricing) return;
+    container.innerHTML = '<span class="loading-inline">Calculando…</span>';
+
+    var promise;
+    if (room.pricing_group === 'salao') {
+      promise = window.Pricing.getSalaoTiers().then(function (tiers) {
+        var tier = tiers.find(function (t) { return parseFloat(t.duration_hours) === hours; });
+        if (!tier && tiers.length) {
+          var base = tiers.find(function (t) { return parseFloat(t.duration_hours) === 1; }) || tiers[0];
+          tier = {
+            price_public:       parseFloat(base.price_public) * hours,
+            price_professional: parseFloat(base.price_professional) * hours
+          };
+        }
+        return tier;
+      });
+    } else {
+      promise = window.Pricing.getAvulsaRate(room.pricing_group).then(function (avulsa) {
+        if (!avulsa) return null;
+        return {
+          price_public:       parseFloat(avulsa.price_public) * hours,
+          price_professional: parseFloat(avulsa.price_professional) * hours
+        };
+      });
+    }
+
+    promise.then(function (tier) {
+      if (!tier) { container.innerHTML = ''; return; }
+      container.innerHTML =
+        '<button type="button" class="rate-preset-chip" data-value="' + tier.price_public + '">Público: ' +
+          window.UI.formatCurrency(tier.price_public) + '</button>' +
+        '<button type="button" class="rate-preset-chip" data-value="' + tier.price_professional + '">Profissional: ' +
+          window.UI.formatCurrency(tier.price_professional) + '</button>';
+      container.querySelectorAll('.rate-preset-chip').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var rateEl = document.getElementById('bk-rate-applied');
+          rateEl.value = parseFloat(btn.dataset.value).toFixed(2);
+          rateEl.dataset.lastDiscount = '0';
+          container.querySelectorAll('.rate-preset-chip').forEach(function (b) {
+            b.classList.toggle('rate-preset-chip--active', b === btn);
+          });
+        });
+      });
+    });
+  }
+
   function suggestRate() {
     var roomId   = document.getElementById('bk-room').value;
     var startVal = document.getElementById('bk-start').value;
@@ -117,15 +175,52 @@
     if (!roomId || !startVal || !endVal || !rateEl) return;
 
     var room = _rooms.find(function (r) { return r.id === roomId; });
-    if (!room || !room.rate_hourly) return;
+    if (!room) return;
 
     var start    = new Date(window.UI.datetimeLocalToISO(startVal));
     var end      = new Date(window.UI.datetimeLocalToISO(endVal));
     var hours    = (end - start) / 3600000;
     if (hours <= 0) return;
 
+    if (room.pricing_group) {
+      renderRatePresets(room, hours);
+      return;
+    }
+
+    clearRatePresets();
+    if (!room.rate_hourly) return;
     rateEl.value = (hours * parseFloat(room.rate_hourly)).toFixed(2);
     rateEl.dataset.lastDiscount = '0';
+  }
+
+  // ---- "Pay with package" selector -------------------------
+
+  function refreshPackageField() {
+    var fieldEl  = document.getElementById('bk-package-field');
+    var selectEl = document.getElementById('bk-package');
+    if (!fieldEl || !selectEl) return;
+    fieldEl.hidden = true;
+    selectEl.innerHTML = '<option value="">— Não usar pacote —</option>';
+
+    if (currentBooking || !window.Pricing) return; // only offered for new bookings (v1 scope)
+    var roomId   = document.getElementById('bk-room').value;
+    var clientId = document.getElementById('bk-client-id').value;
+    if (!roomId || !clientId) return;
+
+    var room = _rooms.find(function (r) { return r.id === roomId; });
+    if (!room || ['grande', 'pequena', 'sala1'].indexOf(room.pricing_group) === -1) return;
+
+    window.Pricing.getActivePackagesForClient(clientId, room.pricing_group).then(function (pkgs) {
+      if (!pkgs || pkgs.length === 0) return;
+      pkgs.forEach(function (p) {
+        var opt = document.createElement('option');
+        opt.value = p.id;
+        var expDate = p.expires_at.slice(0, 10).split('-').reverse().join('/');
+        opt.textContent = p.hours_remaining + 'h restantes (expira ' + expDate + ')';
+        selectEl.appendChild(opt);
+      });
+      fieldEl.hidden = false;
+    });
   }
 
   // ---- Discount (R$ / % toggle) ---------------------------
@@ -243,6 +338,10 @@
     var rateEl = document.getElementById('bk-rate-applied');
     if (rateEl) rateEl.dataset.lastDiscount = '0';
     setDiscountMode('bk-discount-mode', 'valor');
+    clearRatePresets();
+    pendingPackageId = null;
+    var pkgField = document.getElementById('bk-package-field');
+    if (pkgField) pkgField.hidden = true;
     if (window.BKPicker) window.BKPicker.reset();
   }
 
@@ -381,9 +480,26 @@
     var saveBtn = document.getElementById('booking-save-btn');
     window.UI.setLoading(saveBtn, true);
 
-    var promise = currentBooking
-      ? window.sb.from('bookings').update(payload).eq('id', currentBooking.id)
-      : window.sb.from('bookings').insert(payload);
+    var promise;
+    if (pendingPackageId && !currentBooking) {
+      promise = window.sb.rpc('book_with_revenue_source', {
+        p_booking: {
+          room_id:      payload.room_id,
+          client_id:    payload.client_id,
+          client_name:  payload.client_name,
+          client_phone: payload.client_phone,
+          starts_at:    payload.starts_at,
+          ends_at:      payload.ends_at,
+          status:       payload.status,
+          notes:        payload.notes
+        },
+        p_package_id: pendingPackageId
+      });
+    } else {
+      promise = currentBooking
+        ? window.sb.from('bookings').update(payload).eq('id', currentBooking.id)
+        : window.sb.from('bookings').insert(payload);
+    }
 
     promise.then(function (res) {
       window.UI.setLoading(saveBtn, false);
@@ -392,6 +508,8 @@
         var msg = res.error.message || '';
         if (msg.indexOf('no_overlapping') !== -1 || msg.indexOf('exclusion constraint') !== -1) {
           setError('Conflito de horário detectado pelo banco de dados. A reserva não foi salva.');
+        } else if (msg.indexOf('Saldo insuficiente') !== -1) {
+          setError('Saldo insuficiente ou pacote expirado. Atualize a página e tente novamente.');
         } else {
           setError('Erro ao salvar: ' + msg);
         }
@@ -478,6 +596,9 @@
 
       setError('');
 
+      var pkgSelect = document.getElementById('bk-package');
+      pendingPackageId = (pkgSelect && !currentBooking && pkgSelect.value) ? pkgSelect.value : null;
+
       var payload = {
         room_id:      roomId,
         client_name:  clientName,
@@ -525,6 +646,15 @@
       var el = document.getElementById(id);
       if (el) el.addEventListener('change', resetPendingForce);
     });
+
+    // Room change: refresh rate presets + package selector for the new room
+    var roomSelect = document.getElementById('bk-room');
+    if (roomSelect) {
+      roomSelect.addEventListener('change', function () {
+        clearRatePresets();
+        refreshPackageField();
+      });
+    }
   });
 
   // ---- Public API ----------------------------------------

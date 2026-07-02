@@ -1951,6 +1951,7 @@ h1, h2, h3, h4 { line-height: 1.3; font-weight: 600; }
   border-radius: var(--radius); font-size: var(--font-size-sm);
   color: #78350f; font-style: italic;
 }
+.pub-price-split { font-size: var(--font-size-xs); font-style: normal; opacity: .85; }
 
 /* Form error */
 .pub-form-error {
@@ -2376,6 +2377,24 @@ h1, h2, h3, h4 { line-height: 1.3; font-weight: 600; }
   background: var(--primary); border-color: var(--primary); color: #fff;
 }
 
+/* ---- Público/Profissional rate preset chips (bookings + requests) ---- */
+.rate-preset-chips {
+  display: flex; gap: .4rem; flex-wrap: wrap;
+  margin-top: .4rem;
+}
+.rate-preset-chip {
+  padding: .3rem .65rem; border-radius: 9999px;
+  border: 1.5px solid var(--border-strong);
+  background: transparent; color: var(--warm-700);
+  font-family: var(--font-body); font-size: .76rem; font-weight: 600;
+  cursor: pointer; transition: background .15s, border-color .15s, color .15s;
+}
+.rate-preset-chip:hover { background: var(--warm-100); }
+.rate-preset-chip--active {
+  background: var(--primary); border-color: var(--primary); color: #fff;
+}
+.loading-inline { font-size: .78rem; color: var(--text-muted); }
+
 /* ---- Request approval pricing row ---- */
 .req-pricing-row {
   display: flex;
@@ -2602,4 +2621,133 @@ h1, h2, h3, h4 { line-height: 1.3; font-weight: 600; }
   .bar-list-label { width: 90px; font-size: var(--font-size-xs); }
   .bar-list-amount { width: 80px; font-size: var(--font-size-xs); }
   .req-pricing-row .form-field { min-width: 100%; }
+}
+
+/* ============================================================
+   TARIFÁRIO PAGE
+   ============================================================ */
+
+.tarifa-section {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.4rem;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5rem;
+}
+
+.tarifa-section-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--warm-800);
+  margin: 0 0 .3rem;
+}
+
+.tarifa-section-sub {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
+.tarifa-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.tarifa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.tarifa-table th {
+  text-align: left;
+  padding: .5rem .6rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  border-bottom: 1.5px solid var(--border);
+  white-space: nowrap;
+}
+
+.tarifa-table td {
+  padding: .4rem .6rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.tarifa-table input[type="number"] {
+  width: 100px;
+  padding: .35rem .5rem;
+  font-size: var(--font-size-sm);
+}
+
+.tarifa-fee-row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
+.tarifa-fee-row label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--warm-700);
+}
+
+.tarifa-fee-row input {
+  width: 140px;
+}
+
+/* ============================================================
+   CONTRATOS PAGE
+   ============================================================ */
+
+.contracts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.1rem;
+  align-items: start;
+}
+
+.contract-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.4rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  transition: box-shadow .2s, transform .2s;
+  animation: fade-up .35s ease both;
+}
+
+.contract-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.contract-card--inactive { opacity: .52; border-style: dashed; }
+
+.contract-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .5rem;
+}
+
+.contract-card-client { font-weight: 600; color: var(--warm-800); }
+.contract-card-room { font-size: var(--font-size-sm); color: var(--text-muted); margin-top: .1rem; }
+.contract-card-schedule { font-size: var(--font-size-sm); color: var(--warm-600); }
+.contract-card-price { font-size: var(--font-size-sm); font-weight: 600; color: var(--primary); }
+.contract-card-fee { font-weight: 400; color: var(--text-muted); }
+.contract-card-dates { font-size: var(--font-size-xs); color: var(--text-muted); }
+
+.contract-card-actions {
+  display: flex;
+  gap: .5rem;
+  padding-top: .4rem;
+  border-top: 1px solid var(--border);
 }

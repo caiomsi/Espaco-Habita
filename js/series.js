@@ -8,6 +8,7 @@
   var pendingFromDate  = null;  // "YYYY-MM-DD" for editSeriesFuture
   var _editingSeriesId = null;  // null = new series; uuid = editing existing
   var _acDebounce      = null;
+  var _seriesRooms     = [];    // rooms loaded for the modal, incl. pricing_group
 
   // ---- Helpers -----------------------------------------------
 
@@ -310,15 +311,42 @@
     var sel = document.getElementById('sr-room');
     if (!sel) return;
     sel.innerHTML = '<option value="">— Selecione —</option>';
-    window.sb.from('rooms').select('id,name').eq('active', true).order('name')
+    window.sb.from('rooms').select('id,name,pricing_group').eq('active', true).order('name')
       .then(function (res) {
-        (res.data || []).forEach(function (r) {
+        _seriesRooms = res.data || [];
+        _seriesRooms.forEach(function (r) {
           var opt = document.createElement('option');
           opt.value = r.id; opt.textContent = r.name;
           if (r.id === selectedId) opt.selected = true;
           sel.appendChild(opt);
         });
+        updateAulaSuggestVisibility();
       });
+  }
+
+  // ---- Aula rate suggestion (Salão weekly recurring classes) ------
+
+  function updateAulaSuggestVisibility() {
+    var link = document.getElementById('sr-aula-suggest');
+    if (!link) return;
+    var roomId = (document.getElementById('sr-room') || {}).value || '';
+    var room = _seriesRooms.find(function (r) { return r.id === roomId; });
+    link.hidden = !room || room.pricing_group !== 'salao';
+  }
+
+  function suggestAulaRate() {
+    if (!window.Pricing) return;
+    var daysCount = 0;
+    for (var d = 0; d < 7; d++) {
+      var cb = document.getElementById('sr-dow-' + d);
+      if (cb && cb.checked) daysCount++;
+    }
+    var classesPerWeek = daysCount >= 2 ? 2 : 1;
+    window.Pricing.getAulaSuggestion(classesPerWeek).then(function (tier) {
+      if (!tier) return;
+      var rateEl = document.getElementById('sr-rate');
+      if (rateEl) { rateEl.value = parseFloat(tier.price_monthly).toFixed(2); rateEl.dataset.lastDiscount = '0'; }
+    });
   }
 
   // ---- Open series modal (new) --------------------------------
@@ -600,6 +628,18 @@
       discApplyBtn.addEventListener('click', function (e) {
         e.preventDefault();
         applySrDiscount();
+      });
+    }
+
+    // Aula rate suggestion (Salão only)
+    var roomSelect = document.getElementById('sr-room');
+    if (roomSelect) roomSelect.addEventListener('change', updateAulaSuggestVisibility);
+
+    var aulaSuggestBtn = document.getElementById('sr-aula-suggest');
+    if (aulaSuggestBtn) {
+      aulaSuggestBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        suggestAulaRate();
       });
     }
 

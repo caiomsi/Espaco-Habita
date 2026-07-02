@@ -31,10 +31,63 @@
 
   function suggestedRate(req) {
     var room = req.rooms;
-    if (!room || !room.rate_hourly) return '';
+    if (!room || room.pricing_group || !room.rate_hourly) return '';
     var hours = (new Date(req.ends_at) - new Date(req.starts_at)) / 3600000;
     if (hours <= 0) return '';
     return (hours * parseFloat(room.rate_hourly)).toFixed(2);
+  }
+
+  // Público/Profissional preset chips for rooms with a pricing_group,
+  // mirrors js/bookings.js's renderRatePresets.
+  function renderRatePresets(req) {
+    var room = req.rooms;
+    var container = document.getElementById('req-rate-presets-' + req.id);
+    if (!room || !room.pricing_group || !container || !window.Pricing) return;
+
+    var hours = (new Date(req.ends_at) - new Date(req.starts_at)) / 3600000;
+    if (hours <= 0) return;
+
+    var promise;
+    if (room.pricing_group === 'salao') {
+      promise = window.Pricing.getSalaoTiers().then(function (tiers) {
+        var tier = tiers.find(function (t) { return parseFloat(t.duration_hours) === hours; });
+        if (!tier && tiers.length) {
+          var base = tiers.find(function (t) { return parseFloat(t.duration_hours) === 1; }) || tiers[0];
+          tier = {
+            price_public:       parseFloat(base.price_public) * hours,
+            price_professional: parseFloat(base.price_professional) * hours
+          };
+        }
+        return tier;
+      });
+    } else {
+      promise = window.Pricing.getAvulsaRate(room.pricing_group).then(function (avulsa) {
+        if (!avulsa) return null;
+        return {
+          price_public:       parseFloat(avulsa.price_public) * hours,
+          price_professional: parseFloat(avulsa.price_professional) * hours
+        };
+      });
+    }
+
+    promise.then(function (tier) {
+      if (!tier) return;
+      container.innerHTML =
+        '<button type="button" class="rate-preset-chip" data-value="' + tier.price_public + '">Público: ' +
+          window.UI.formatCurrency(tier.price_public) + '</button>' +
+        '<button type="button" class="rate-preset-chip" data-value="' + tier.price_professional + '">Profissional: ' +
+          window.UI.formatCurrency(tier.price_professional) + '</button>';
+      container.querySelectorAll('.rate-preset-chip').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var rateEl = document.getElementById('req-rate-' + req.id);
+          if (rateEl) rateEl.value = parseFloat(btn.dataset.value).toFixed(2);
+          container.querySelectorAll('.rate-preset-chip').forEach(function (b) {
+            b.classList.toggle('rate-preset-chip--active', b === btn);
+          });
+          updatePricePreview(req.id);
+        });
+      });
+    });
   }
 
   function discountMode(reqId) {
@@ -105,6 +158,7 @@
         '<div class="form-field">' +
           '<label for="req-rate-' + req.id + '">Valor (R$)</label>' +
           '<input type="number" id="req-rate-' + req.id + '" min="0" step="0.01" value="' + suggested + '" placeholder="0,00">' +
+          '<div id="req-rate-presets-' + req.id + '" class="rate-preset-chips"></div>' +
         '</div>' +
         '<div class="form-field">' +
           '<label>Desconto</label>' +
@@ -167,6 +221,7 @@
     if (rateInput) rateInput.addEventListener('input', function () { updatePricePreview(req.id); });
     if (discInput) discInput.addEventListener('input', function () { updatePricePreview(req.id); });
     updatePricePreview(req.id);
+    renderRatePresets(req);
   }
 
   // ---- Actions --------------------------------------------
@@ -301,7 +356,7 @@
     if (container) container.innerHTML = '<div class="loading-state">Carregando…</div>';
 
     window.sb.from('bookings')
-      .select('*, rooms(name, rate_hourly, rate_daily, rate_weekly)')
+      .select('*, rooms(name, rate_hourly, rate_daily, rate_weekly, pricing_group)')
       .eq('status', 'solicitado')
       .order('created_at', { ascending: true })
       .then(function (res) {

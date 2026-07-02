@@ -13,7 +13,9 @@
     room:         null,
     activeRate:   'hora',
     bookings:     [],
-    blocks:       []
+    blocks:       [],
+    salaoTiers:   [],   // populated when room.pricing_group === 'salao'
+    avulsaRate:   null  // populated when room.pricing_group is grande/pequena/sala1 and rate_hourly is null
   };
 
   // ---- Helpers --------------------------------------------
@@ -36,14 +38,54 @@
     });
   }
 
+  function findSalaoTier(rateKey) {
+    return (state.salaoTiers || []).find(function (t) { return String(t.duration_hours) === rateKey; }) || null;
+  }
+
   // Compute price from rate type + duration
   function computePrice(rateKey, ms) {
     var room = state.room;
     if (!room) return null;
+    if (room.pricing_group === 'salao') {
+      var tier = findSalaoTier(rateKey);
+      return tier ? parseFloat(tier.price_public) : null;
+    }
     if (rateKey === 'semana' && room.rate_weekly) return parseFloat(room.rate_weekly);
     if (rateKey === 'dia'    && room.rate_daily)  return parseFloat(room.rate_daily);
     if (room.rate_hourly) return (ms / 3600000) * parseFloat(room.rate_hourly);
+    if (state.avulsaRate) return (ms / 3600000) * parseFloat(state.avulsaRate.price_public);
     return null;
+  }
+
+  // Active preset's duration in ms — either a legacy hora/dia/semana preset,
+  // or (for Salão) the selected duration-tier's duration_hours.
+  function activeDurationMs() {
+    if (state.room && state.room.pricing_group === 'salao') {
+      var tier = findSalaoTier(state.activeRate);
+      return tier ? parseFloat(tier.duration_hours) * 3600000 : 3600000;
+    }
+    return (RATE_PRESETS[state.activeRate] || RATE_PRESETS.hora).ms;
+  }
+
+  function activeRateLabel() {
+    if (state.room && state.room.pricing_group === 'salao') {
+      var tier = findSalaoTier(state.activeRate);
+      return tier ? tier.duration_label : '';
+    }
+    return (RATE_PRESETS[state.activeRate] || {}).label || '';
+  }
+
+  // Replaces the hora/dia/semana preset pills with one button per Salão
+  // duration tier (1h…10h), so the public price preview matches the real
+  // rate sheet instead of the generic hourly/daily/weekly formula.
+  function renderSalaoPills(tiers) {
+    var container = document.querySelector('.rate-preset-pills');
+    if (!container || !tiers || tiers.length === 0) return;
+    container.innerHTML = tiers.map(function (t, i) {
+      return '<button type="button" class="rate-preset-pill' + (i === 0 ? ' rate-preset-pill--active' : '') +
+        '" data-rate="' + t.duration_hours + '">' + escHtml(t.duration_label) + '</button>';
+    }).join('');
+    state.activeRate = String(tiers[0].duration_hours);
   }
 
   // ---- Room hero rendering --------------------------------
@@ -170,7 +212,7 @@
     var endEl   = document.getElementById('req-end');
     if (!startEl || !endEl || !startEl.value) return;
     var startDate = new Date(startEl.value + ':00-03:00');
-    var ms        = RATE_PRESETS[state.activeRate].ms;
+    var ms        = activeDurationMs();
     var endDate   = new Date(startDate.getTime() + ms);
     endEl.value   = window.UI.toDatetimeLocal(endDate);
     updatePricePreview();
@@ -200,8 +242,20 @@
       : Math.round(hours / 24) + ' dias';
 
     previewEl.hidden = false;
-    previewEl.textContent = 'Estimativa: ' + window.UI.formatCurrency(price) +
-      ' (' + RATE_PRESETS[state.activeRate].label + ' · ' + durLabel + ')';
+
+    var html = 'Estimativa: ' + window.UI.formatCurrency(price) +
+      ' (' + activeRateLabel() + ' · ' + durLabel + ')';
+
+    if (state.room && state.room.pricing_group === 'salao') {
+      var tier = findSalaoTier(state.activeRate);
+      if (tier) {
+        html += '<br><span class="pub-price-split">Entrada de referência: ' +
+          window.UI.formatCurrency(tier.entrada_public) + ' · Saldo: ' +
+          window.UI.formatCurrency(tier.saldo_public) + '</span>';
+      }
+    }
+
+    previewEl.innerHTML = html;
   }
 
   function setError(msg) {
@@ -285,7 +339,7 @@
 
         var ms     = new Date(endsAt) - new Date(startsAt);
         var price  = computePrice(state.activeRate, ms);
-        var rateLbl = RATE_PRESETS[state.activeRate].label;
+        var rateLbl = activeRateLabel();
         var notesFull = ('Tarifa: ' + rateLbl + (notes.trim() ? '\n' + notes.trim() : ''));
 
         // Generate the booking id client-side so we can reference it for the
@@ -380,16 +434,34 @@
       state.bookings = bookingsRes.data || [];
       state.blocks   = blocksRes.data   || [];
 
-      renderHero(state.room);
-      renderAvailability();
-      wireForm(roomId);
+      function finishBoot() {
+        renderHero(state.room);
+        renderAvailability();
+        wireForm(roomId);
 
-      // Set default start to tomorrow 09:00
-      var tomorrow = window.UI.addDays(new Date(), 1);
-      var tStr     = window.UI.localDateStr(tomorrow);
-      var startEl  = document.getElementById('req-start');
-      if (startEl) startEl.value = tStr + 'T09:00';
-      updateEndFromStart();
+        // Set default start to tomorrow 09:00
+        var tomorrow = window.UI.addDays(new Date(), 1);
+        var tStr     = window.UI.localDateStr(tomorrow);
+        var startEl  = document.getElementById('req-start');
+        if (startEl) startEl.value = tStr + 'T09:00';
+        updateEndFromStart();
+      }
+
+      var group = state.room.pricing_group;
+      if (group === 'salao' && window.Pricing) {
+        window.Pricing.getSalaoTiers().then(function (tiers) {
+          state.salaoTiers = tiers;
+          renderSalaoPills(tiers);
+          finishBoot();
+        });
+      } else if (['grande', 'pequena', 'sala1'].indexOf(group) !== -1 && !state.room.rate_hourly && window.Pricing) {
+        window.Pricing.getAvulsaRate(group).then(function (tier) {
+          state.avulsaRate = tier;
+          finishBoot();
+        });
+      } else {
+        finishBoot();
+      }
     });
   });
 
