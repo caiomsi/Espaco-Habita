@@ -55,16 +55,24 @@
     return Math.max(0, Math.min(reais, baseRate));
   }
 
+  // Returns { baseRate, discountReais, finalRate } — the source of truth for
+  // what to persist, so rate_applied is always net of discount even if the
+  // admin never clicked "Aplicar" (Financeiro sums rate_applied directly).
+  function computeFinalPricing(rateEl, discEl, pillsId) {
+    var lastApplied  = parseFloat(rateEl.dataset.lastDiscount || '0') || 0;
+    var baseRate      = (parseFloat(rateEl.value) || 0) + lastApplied;
+    var discountReais = computeDiscountReais(rateEl, discEl, pillsId);
+    return { baseRate: baseRate, discountReais: discountReais, finalRate: baseRate - discountReais };
+  }
+
   function applySrDiscount() {
     var rateEl = document.getElementById('sr-rate');
     var discEl = document.getElementById('sr-discount');
     if (!rateEl || !discEl) return;
-    var lastApplied  = parseFloat(rateEl.dataset.lastDiscount || '0') || 0;
-    var baseRate     = (parseFloat(rateEl.value) || 0) + lastApplied;
-    var discountReais = computeDiscountReais(rateEl, discEl, 'sr-discount-mode');
-    rateEl.value = (baseRate - discountReais).toFixed(2);
-    rateEl.dataset.lastDiscount = discountReais.toFixed(2);
-    discEl.value = discountReais.toFixed(2);
+    var p = computeFinalPricing(rateEl, discEl, 'sr-discount-mode');
+    rateEl.value = p.finalRate.toFixed(2);
+    rateEl.dataset.lastDiscount = p.discountReais.toFixed(2);
+    discEl.value = p.discountReais.toFixed(2);
     setDiscountMode('sr-discount-mode', 'valor');
   }
 
@@ -195,10 +203,13 @@
     var clientId  = (document.getElementById('sr-client-id')  || {}).value || '';
     var startTime = (document.getElementById('sr-start-time') || {}).value || '';
     var endTime   = (document.getElementById('sr-end-time')   || {}).value || '';
-    var rate      = parseFloat((document.getElementById('sr-rate')  || {}).value);
     var rateEl    = document.getElementById('sr-rate');
     var discEl    = document.getElementById('sr-discount');
-    var discount  = (rateEl && discEl) ? computeDiscountReais(rateEl, discEl, 'sr-discount-mode') : 0;
+    // Compute net-of-discount here rather than reading rateEl.value raw — see
+    // computeFinalPricing() for why (rate_applied must always be net).
+    var pricing   = (rateEl && discEl) ? computeFinalPricing(rateEl, discEl, 'sr-discount-mode') : null;
+    var rate      = (rateEl && rateEl.value) ? (pricing ? pricing.finalRate : parseFloat(rateEl.value)) : NaN;
+    var discount  = pricing ? pricing.discountReais : 0;
     var notes     = ((document.getElementById('sr-notes') || {}).value || '').trim();
     var startsOn  = (document.getElementById('sr-starts-on')  || {}).value || '';
     var endsOn    = (document.getElementById('sr-ends-on')    || {}).value || '';

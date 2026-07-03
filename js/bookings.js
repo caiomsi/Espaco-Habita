@@ -157,11 +157,15 @@
           window.UI.formatCurrency(tier.price_professional) + '</button>';
 
       // Pre-fill the recommended (public) price by default so a suggestion is
-      // visible immediately, not just after clicking a chip.
+      // visible immediately, not just after clicking a chip. Also overwrite
+      // if the current value is itself just a leftover auto-suggestion (e.g.
+      // from before the admin switched rooms) — only a value the admin typed
+      // or picked themselves is left untouched. See dataset.autoSuggested.
       var rateEl0 = document.getElementById('bk-rate-applied');
-      if (rateEl0 && !rateEl0.value) {
+      if (rateEl0 && (!rateEl0.value || rateEl0.dataset.autoSuggested === '1')) {
         rateEl0.value = parseFloat(tier.price_public).toFixed(2);
         rateEl0.dataset.lastDiscount = '0';
+        rateEl0.dataset.autoSuggested = '1';
       }
 
       container.querySelectorAll('.rate-preset-chip').forEach(function (btn) {
@@ -169,6 +173,7 @@
           var rateEl = document.getElementById('bk-rate-applied');
           rateEl.value = parseFloat(btn.dataset.value).toFixed(2);
           rateEl.dataset.lastDiscount = '0';
+          rateEl.dataset.autoSuggested = ''; // deliberate pick — don't silently replace later
           container.querySelectorAll('.rate-preset-chip').forEach(function (b) {
             b.classList.toggle('rate-preset-chip--active', b === btn);
           });
@@ -201,6 +206,22 @@
     if (!room.rate_hourly) return;
     rateEl.value = (hours * parseFloat(room.rate_hourly)).toFixed(2);
     rateEl.dataset.lastDiscount = '0';
+    rateEl.dataset.autoSuggested = '1';
+  }
+
+  // Auto-triggered whenever room/start/end change, so a price recommendation
+  // appears immediately instead of requiring a manual "Sugerir" click. Safe to
+  // call freely — never overwrites a rate the admin actually typed or picked
+  // (dataset.autoSuggested distinguishes that from a stale auto-fill left over
+  // from a previous room/duration selection, which IS safe to refresh).
+  function autoSuggestRate() {
+    var roomId = (document.getElementById('bk-room') || {}).value;
+    if (!roomId) return;
+    var room = _rooms.find(function (r) { return r.id === roomId; });
+    if (!room) return;
+    var rateEl = document.getElementById('bk-rate-applied');
+    if (!room.pricing_group && rateEl && rateEl.value && rateEl.dataset.autoSuggested !== '1') return;
+    suggestRate();
   }
 
   // ---- "Pay with package" selector -------------------------
@@ -257,16 +278,25 @@
     return Math.max(0, Math.min(reais, baseRate));
   }
 
+  // Returns { baseRate, discountReais, finalRate } from the form's current
+  // rate + discount inputs — the source of truth for what to persist, so the
+  // stored rate_applied is always net of discount even if the admin never
+  // clicked "Aplicar" (Financeiro sums rate_applied directly as revenue).
+  function computeFinalPricing(rateEl, discEl, pillsId) {
+    var lastApplied = parseFloat(rateEl.dataset.lastDiscount || '0') || 0;
+    var baseRate     = (parseFloat(rateEl.value) || 0) + lastApplied;
+    var discountReais = computeDiscountReais(rateEl, discEl, pillsId);
+    return { baseRate: baseRate, discountReais: discountReais, finalRate: baseRate - discountReais };
+  }
+
   function applyBkDiscount() {
     var rateEl = document.getElementById('bk-rate-applied');
     var discEl = document.getElementById('bk-discount');
     if (!rateEl || !discEl) return;
-    var lastApplied = parseFloat(rateEl.dataset.lastDiscount || '0') || 0;
-    var baseRate     = (parseFloat(rateEl.value) || 0) + lastApplied;
-    var discountReais = computeDiscountReais(rateEl, discEl, 'bk-discount-mode');
-    rateEl.value = (baseRate - discountReais).toFixed(2);
-    rateEl.dataset.lastDiscount = discountReais.toFixed(2);
-    discEl.value = discountReais.toFixed(2);
+    var p = computeFinalPricing(rateEl, discEl, 'bk-discount-mode');
+    rateEl.value = p.finalRate.toFixed(2);
+    rateEl.dataset.lastDiscount = p.discountReais.toFixed(2);
+    discEl.value = p.discountReais.toFixed(2);
     setDiscountMode('bk-discount-mode', 'valor');
   }
 
@@ -329,7 +359,10 @@
     var discEl = document.getElementById('bk-discount');
     var discountAmount = booking.discount_amount || 0;
     if (discEl) discEl.value = discountAmount ? discountAmount : '';
-    if (rateEl) rateEl.dataset.lastDiscount = discountAmount || '0';
+    if (rateEl) {
+      rateEl.dataset.lastDiscount = discountAmount || '0';
+      rateEl.dataset.autoSuggested = ''; // this is the booking's real saved rate, not a suggestion
+    }
     setDiscountMode('bk-discount-mode', 'valor');
 
     window.UI.openModal('booking-modal');
@@ -346,7 +379,10 @@
     setError('');
     setWarning('');
     var rateEl = document.getElementById('bk-rate-applied');
-    if (rateEl) rateEl.dataset.lastDiscount = '0';
+    if (rateEl) {
+      rateEl.dataset.lastDiscount = '0';
+      rateEl.dataset.autoSuggested = '';
+    }
     setDiscountMode('bk-discount-mode', 'valor');
     clearRatePresets();
     pendingPackageId = null;
@@ -552,6 +588,15 @@
       });
     }
 
+    // Typing in the rate field by hand is a deliberate choice — stop treating
+    // it as a replaceable auto-suggestion (see dataset.autoSuggested above).
+    var rateAppliedEl = document.getElementById('bk-rate-applied');
+    if (rateAppliedEl) {
+      rateAppliedEl.addEventListener('input', function () {
+        rateAppliedEl.dataset.autoSuggested = '';
+      });
+    }
+
     // Discount mode pills (R$ / %)
     document.querySelectorAll('#bk-discount-mode .discount-mode-pill').forEach(function (p) {
       p.addEventListener('click', function () { setDiscountMode('bk-discount-mode', p.dataset.mode); });
@@ -583,9 +628,14 @@
       var hintEl     = document.getElementById('bk-client-phone-hint');
       var phone      = (hintEl && !hintEl.hidden) ? hintEl.textContent.trim() : null;
       var rateEl     = document.getElementById('bk-rate-applied');
-      var rateApplied = rateEl && rateEl.value ? parseFloat(rateEl.value) : null;
       var discEl     = document.getElementById('bk-discount');
-      var discountAmount = (rateEl && discEl) ? computeDiscountReais(rateEl, discEl, 'bk-discount-mode') : 0;
+      // Always compute the net-of-discount rate here rather than reading the
+      // field raw — otherwise a discount typed without clicking "Aplicar"
+      // first would save the pre-discount rate as rate_applied (Financeiro
+      // treats rate_applied as final revenue, so this must always be net).
+      var pricing        = (rateEl && discEl) ? computeFinalPricing(rateEl, discEl, 'bk-discount-mode') : null;
+      var rateApplied     = (rateEl && rateEl.value) ? (pricing ? pricing.finalRate : parseFloat(rateEl.value)) : null;
+      var discountAmount = pricing ? pricing.discountReais : 0;
 
       if (!clientName) { setError('O nome do cliente é obrigatório.'); return; }
       if (!clientId)   {
@@ -663,8 +713,16 @@
       roomSelect.addEventListener('change', function () {
         clearRatePresets();
         refreshPackageField();
+        autoSuggestRate();
       });
     }
+
+    // Date/time changes (dispatched by bk-picker.js when start/end actually
+    // change, including on initial modal open) → refresh the recommendation.
+    ['bk-start', 'bk-end'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('change', autoSuggestRate);
+    });
   });
 
   // ---- Public API ----------------------------------------
